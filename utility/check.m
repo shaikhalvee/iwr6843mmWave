@@ -1,0 +1,2 @@
+hello = "hello";
+nice = 'nice';
