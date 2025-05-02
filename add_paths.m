@@ -8,9 +8,11 @@ projectRoot = fileparts(currentFile);
 folders = genpath(projectRoot);
 folders = strsplit(folders, pathsep);
 
-% Exclude '.idea' and empty entries
-folders = folders(~cellfun(@isempty, folders)); % remove empty first
-folders = folders(~contains(folders, ignoreFolders)); % remove .idea folders
+%% Exclude ignoreFolders and empty entries
+% remove empty first
+folders = folders(~cellfun(@isempty, folders));
+% remove ignoreFolders folders
+folders = folders(~contains(folders, ignoreFolders));
 
-% Now add paths safely
+%% Now add paths safely
 addpath(folders{:});
