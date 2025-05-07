@@ -90,5 +90,7 @@ classdef iwr6843Device
             obj.is_iq_swap   = sys_param_json.mmWaveDevices.rawDataCaptureConfig.rlDevDataFmtCfg_t.iqSwapSel;
             obj.is_interleave = sys_param_json.mmWaveDevices.rawDataCaptureConfig.rlDevDataFmtCfg_t.chInterleave;
         end
+
+        % function []
     end
 end
