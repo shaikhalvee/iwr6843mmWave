@@ -33,8 +33,7 @@ classdef iwr6843Device
 
     methods
         % 
-        function obj = iwr6843Device(adc_data_bin_file, ...
-                mmwave_setup_json_file)
+        function obj = iwr6843Device(adc_data_bin_file, mmwave_setup_json_file)
             % Load JSON and decode:
             sys_param_json = jsondecode(fileread(mmwave_setup_json_file));
 
@@ -43,7 +42,8 @@ classdef iwr6843Device
             obj.lambda = physconst('LightSpeed') / obj.freq;
 
             % Angle‐of‐arrival grid (0°–180°):
-            obj.aoa_angle = 0:1:180;  obj.num_angle = length(obj.aoa_angle);
+            obj.aoa_angle = 0:1:180;  
+            obj.num_angle = length(obj.aoa_angle);
 
             % ADC format & channel enable mask:
             obj.num_byte_per_sample = 4;
@@ -56,8 +56,7 @@ classdef iwr6843Device
             obj.win_hann              = hanning(obj.num_sample_per_chirp);
 
             % Compute bytes/frame & frame count from file size:
-            obj.size_per_frame = obj.num_byte_per_sample * obj.num_rx_chnl ...
-                                 * obj.num_sample_per_chirp * obj.num_chirp_per_frame;
+            obj.size_per_frame = obj.num_byte_per_sample * obj.num_rx_chnl * obj.num_sample_per_chirp * obj.num_chirp_per_frame;
             try
                 bin_file = dir(adc_data_bin_file);
             catch
@@ -71,8 +70,7 @@ classdef iwr6843Device
             if sys_param_json.mmWaveDevices.rfConfig.rlAdcOutCfg_t.fmt.b2AdcBits == 2
                 obj.adc_bits = 16;
             end
-            obj.dbfs_coeff = - (20*log10(2^(obj.adc_bits-1)) + ...
-                               20*log10(sum(obj.win_hann)) - 20*log10(sqrt(2)));
+            obj.dbfs_coeff = - (20*log10(2^(obj.adc_bits-1)) + 20*log10(sum(obj.win_hann)) - 20*log10(sqrt(2)));
 
             % Bandwidth & timing:
             obj.chirp_slope         = sys_param_json.mmWaveDevices.rfConfig.rlProfiles.rlProfileCfg_t.freqSlopeConst_MHz_usec;
@@ -83,9 +81,8 @@ classdef iwr6843Device
             obj.frame_periodicity   = sys_param_json.mmWaveDevices.rfConfig.rlFrameCfg_t.framePeriodicity_msec;
 
             % Range & velocity metrics:
-            obj.range_max = physconst('LightSpeed') * obj.adc_samp_rate*1e6 ...
-                            / (2*obj.chirp_slope*1e6*1e6);
-            obj.range_res = physconst('LightSpeed') / (2*obj.bw*1e6);
+            obj.range_max = physconst('LightSpeed') * obj.adc_samp_rate*1e6 / (2*obj.chirp_slope*1e6*1e6);
+            obj.range_res = physconst('LightSpeed') / (2*obj.bandwidth*1e6);
             obj.v_max     = obj.lambda / (4*(obj.chirp_ramp_time + obj.chirp_idle_time)/1e6);
             obj.v_res     = obj.lambda / (2*obj.num_chirp_per_frame*(obj.chirp_idle_time+obj.chirp_ramp_time)/1e6);
 
