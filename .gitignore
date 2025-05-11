@@ -2,3 +2,4 @@
 .git
 output/
 *.asv
+.DS_Store
