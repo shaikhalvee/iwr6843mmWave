@@ -1,3 +1,5 @@
+showData = 0;
+
 mmwave_json_file_name = GET_MMWAVE_SETUP_JSON_FILE();
 adc_bin_file_name   = GET_ADC_DATA_BIN_FILE();
 mmWave_device       = iwr6843Device(adc_bin_file_name, mmwave_json_file_name);
@@ -18,7 +20,7 @@ v_res              = mmWave_device.v_res;
 adc_data_cube      = reshape(raw_adc_data, rx_channels, samples_per_chirp, chirps_per_frame, num_frames);
 
 % Select only the last Rx channel for analysis:
-adc_channel_data_cube = squeeze(adc_data_cube(rx_channels,:,:,:));
+% adc_channel_data_cube = squeeze(adc_data_cube(rx_channels,:,:,:));
 
 % Window functions:
 range_window   = hann(samples_per_chirp);
@@ -32,38 +34,45 @@ range_idx      = ranges <= range_limit;
 limited_ranges = ranges(range_idx);
 
 % Pre-allocate storage for normalized FFT:
-fft_2d_range_cube = zeros(samples_per_chirp, chirps_per_frame, num_frames);
+fft_2d_radar_cube = zeros(samples_per_chirp, chirps_per_frame, num_frames, rx_channels);
 
-% Frame-by-frame processing & visualization:
-for frame_index = 1:num_frames
-   curr_frame = squeeze(adc_channel_data_cube(:,:,frame_index));   
+% Process for each channel
+for rx = 1:rx_channels
+    % Frame-by-frame processing & visualization:
+    for frame_index = 1:num_frames
+        curr_frame = squeeze(adc_data_cube(rx, : , : , frame_index));
 
-   % DC subtraction per range bin:
-   curr_frame = curr_frame - mean(curr_frame, 2);
+        % DC subtraction per range bin:
+        curr_frame = curr_frame - mean(curr_frame, 2);
 
-   % 2D windowing:
-   curr_frame = curr_frame .* (range_window * doppler_window');
+        % 2D windowing:
+        curr_frame = curr_frame .* (range_window * doppler_window');
 
-   % Range FFT then Doppler FFT + shift:
-   % range_doppler_fft = fftshift( fft( fft(curr_frame, [], 1), [], 2 ), 2 );
-   range_fft = fft(curr_frame, [], 1);
-   doppler_fft = fft(range_fft, [], 2);
-   range_doppler_fft = fftshift(doppler_fft, 2);
-   mag = abs(range_doppler_fft);
-   noise_flr = median(mag(:));
-   norm_fft = mag / noise_flr;
+        % Range FFT then Doppler FFT + shift:
+        % range_doppler_fft = fftshift( fft( fft(curr_frame, [], 1), [], 2 ), 2 );
+        range_fft = fft(curr_frame, [], 1);
+        doppler_fft = fft(range_fft, [], 2);
+        range_doppler_fft = fftshift(doppler_fft, 2);
+        mag = abs(range_doppler_fft);
+        noise_flr = median(mag(:));
+        norm_fft = mag / noise_flr;
 
-   fft_2d_range_cube(:,:,frame_index) = norm_fft;
+        fft_2d_radar_cube(:, : , frame_index, rx) = norm_fft;
 
-   % Display in dB with axes flipped to physical units:
-   frame_data = 20*log10(fliplr(norm_fft(range_idx,:)));
-   imagesc(velocities, limited_ranges, frame_data);
-   set(gca, 'YDir','normal');
-   xlabel('Velocity (m/s)');
-   ylabel('Range (m)');
-   title(sprintf('Range–Doppler FFT (frame %d)', frame_index));
-   colorbar;  pause(0.1);
+        % Display in dB with axes flipped to physical units:
+        if showData
+            frame_data = 20*log10(fliplr(norm_fft(range_idx,:)));
+            imagesc(velocities, limited_ranges, frame_data);
+            set(gca, 'YDir','normal');
+            xlabel('Velocity (m/s)');
+            ylabel('Range (m)');
+            title(sprintf('Range–Doppler FFT (frame %d)', frame_index));
+            colorbar;  pause(0.1);
+        end
+        
+    end
 end
+
 
 % Save for CFAR processing:
 save('output/fft_result_cfar_ready.mat', 'fft_2d_range_cube');
