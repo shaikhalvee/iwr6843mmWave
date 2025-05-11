@@ -75,6 +75,4 @@ end
 
 
 % Save for CFAR processing:
-save('output/fft_result_cfar_ready.mat', 'fft_2d_range_cube');
-
-% N.B. This code only works for the last Rx. Need to process for all Rx
+save('output/fft_result_cube.mat', 'fft_2d_radar_cube', 'velocities', 'limited_ranges', 'range_idx');
