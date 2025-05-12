@@ -5,6 +5,7 @@ function rdFFTViewer()
     % Load the precomputed RD FFT cube
     S = load('output/fft_result_cube.mat');
     radar_cube = S.fft_2d_radar_cube;
+    radar_cube = abs(radar_cube);
     velocities = S.velocities;
     limited_ranges = S.limited_ranges;
     range_idx = S.range_idx;

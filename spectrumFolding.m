@@ -27,6 +27,10 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% New Style Coding
+
+clear all;
+
+% load variables
 S = load('output/fft_result_cube.mat');
 fft_2d_radar_cube = S.fft_2d_radar_cube;
 
@@ -34,27 +38,28 @@ fft_2d_radar_cube = S.fft_2d_radar_cube;
 jMin = 2;          % minimum fold size
 jMax = 20;         % maximum fold size
 
-[R, D, F, Rx] = size(fft_2d_radar_cube);
+[numRangeBins, numDopplerBins, numFrames, numRx] = size(fft_2d_radar_cube);
 
 % pre-allocate: folding scores per range, frame, Rx
-PMMmap = zeros(R, F, Rx);
+PMMmap = zeros(numRangeBins, numFrames, numRx);
 
-for f = 1:F
-    for rx = 1:Rx
-        for r = 1:R
+for f = 1:numFrames
+    for rx = 1:numRx
+        for r = 1:numRangeBins
             % 1×D Doppler‐spectrum magnitude at (r,f,rx)
-            dopSpec = abs( fft_2d_radar_cube(r, :, f, rx) );
+            dopplerSpectrum = 20*log10(fliplr(abs(fft_2d_radar_cube(r, :, f, rx)))); 
+            % usually it was done before. but for the sake of input sanitization, we're performing the abs.
             
             bestScore = 0;
             % search over integer fold‐sizes j
             for j = jMin:jMax
-                M = floor(D / j);
+                M = floor(numDopplerBins / j);
                 if M < 1
                     break;  % no valid folding for this j
                 end
-                
+                 
                 % cut to an exact multiple of j, reshape into j×M
-                Xcut = dopSpec(1:(j*M));
+                Xcut = dopplerSpectrum(1:(j*M));
                 Xmat = reshape(Xcut, j, M);
                 
                 % column‐wise average of aligned bins
@@ -65,7 +70,7 @@ for f = 1:F
                 
                 bestScore = max(bestScore, score_j);
             end
-            
+            % PMM score saved for current range bin
             PMMmap(r, f, rx) = bestScore;
         end
     end
@@ -76,7 +81,7 @@ end
 PMM_combined = max(PMMmap, [], 3);   % size = [R × F]
 
 % visualize the Range–Time PMM heat‐map
-imagesc((1:F), (1:R), PMM_combined);
+imagesc((1:numFrames), (1:numRangeBins), PMM_combined(1:numRangeBins,:));
 axis xy;
 xlabel('Frame index');
 ylabel('Range bin');

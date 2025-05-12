@@ -53,6 +53,7 @@ for rx = 1:rx_channels
         range_fft = fft(curr_frame, [], 1);
         doppler_fft = fft(range_fft, [], 2);
         range_doppler_fft = fftshift(doppler_fft, 2);
+        
         mag = abs(range_doppler_fft);
         noise_flr = median(mag(:));
         norm_fft = mag / noise_flr;
