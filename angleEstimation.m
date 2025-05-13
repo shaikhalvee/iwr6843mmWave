@@ -44,11 +44,12 @@ for f = 1:F
     dSel      = max(1,dMid-floor(snapWin/2)) : min(D,dMid+floor(snapWin/2));
     snapshots = Xrd(dSel, :).';                      % [Rx × Ns]
     Rcov      = (snapshots * snapshots.') / size(snapshots,2) + delta*eye(Rx);
-    Ri        = inv(Rcov);                           % 4×4 here
     
     % --- 1.3  Capon weights for every angle (shared)
-    denom = sum( (Ri*A) .* conj(A), 1 );             % 1×La
-    W     = (Ri*A) ./ denom;                         % Rx × La   (each col: w(θ))
+    % Solve Rcov * X  =  A   for X   ➜   X = Rcov\A   (same as Ri*A)
+    Xa    = Rcov \ A;                           % Rx × La
+    denom = sum( conj(A) .* Xa, 1 );            % 1 × La
+    W     = Xa ./ denom;                        % Rx × La   (each col: w(θ))
     
     % --- 1.4  Beamform: Y(D × La)  =  Xrd * conj(w)
     Y = Xrd * conj(W);                               % [D × La]
