@@ -4,7 +4,7 @@
 function rdFFTViewer()
     % Load the precomputed RD FFT cube
     S = load('output/fft_result_cube.mat');
-    radar_cube = S.fft_2d_radar_cube;
+    radar_cube = S.fft_complex_radar_cube;
     radar_cube = abs(radar_cube);
     velocities = S.velocities;
     limited_ranges = S.limited_ranges;
@@ -57,6 +57,7 @@ function rdFFTViewer()
 
         % Extract the RD FFT slice for (range × doppler)
         rdSlice = fliplr(radar_cube(range_idx,:, frame, rx));
+        % rdSlice = 20*log10(fliplr(radar_cube(range_idx,:, frame, rx)));
         % frame_data = 20*log10(fliplr(norm_fft(range_idx,:)));
 
         % Display

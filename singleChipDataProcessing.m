@@ -34,7 +34,9 @@ range_idx      = ranges <= range_limit;
 limited_ranges = ranges(range_idx);
 
 % Pre-allocate storage for normalized FFT:
-fft_2d_radar_cube = zeros(samples_per_chirp, chirps_per_frame, num_frames, rx_channels);
+% fft_2d_radar_cube = zeros(samples_per_chirp, chirps_per_frame, num_frames, rx_channels);
+fft_complex_radar_cube = zeros(samples_per_chirp, chirps_per_frame, num_frames, rx_channels);
+fft_norm_radar_cube = zeros(samples_per_chirp, chirps_per_frame, num_frames, rx_channels);
 
 % Process for each channel
 for rx = 1:rx_channels
@@ -54,26 +56,27 @@ for rx = 1:rx_channels
         doppler_fft = fft(range_fft, [], 2);
         range_doppler_fft = fftshift(doppler_fft, 2);
         
-        mag = abs(range_doppler_fft);
-        noise_flr = median(mag(:));
-        norm_fft = mag / noise_flr;
+        % mag = abs(range_doppler_fft);
+        % noise_flr = median(mag(:));
+        % norm_fft = mag / noise_flr;
 
-        fft_2d_radar_cube(:, : , frame_index, rx) = norm_fft;
+        fft_complex_radar_cube(:, : , frame_index, rx) = range_doppler_fft;
+        % fft_norm_radar_cube(:, : , frame_index, rx) = norm_fft;
 
         % Display in dB with axes flipped to physical units:
-        if showData
-            frame_data = 20*log10(fliplr(norm_fft(range_idx,:)));
-            imagesc(velocities, limited_ranges, frame_data);
-            set(gca, 'YDir','normal');
-            xlabel('Velocity (m/s)');
-            ylabel('Range (m)');
-            title(sprintf('Range–Doppler FFT (frame %d)', frame_index));
-            colorbar;  pause(0.1);
-        end
+        % if showData
+        %     frame_data = 20*log10(fliplr(norm_fft(range_idx,:)));
+        %     imagesc(velocities, limited_ranges, frame_data);
+        %     set(gca, 'YDir','normal');
+        %     xlabel('Velocity (m/s)');
+        %     ylabel('Range (m)');
+        %     title(sprintf('Range–Doppler FFT (frame %d)', frame_index));
+        %     colorbar;  pause(0.1);
+        % end
         
     end
 end
 
 
 % Save for CFAR processing:
-save('output/fft_result_cube.mat', 'fft_2d_radar_cube', 'velocities', 'limited_ranges', 'range_idx');
+save('output/fft_result_cube.mat', 'fft_complex_radar_cube', 'mmWave_device', 'velocities', 'limited_ranges', 'range_idx');
