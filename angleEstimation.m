@@ -13,16 +13,16 @@ Rres = mmWave_device.range_res;
 track_pf_range = P.track_pf_range;
 
 %% PARAMETERS -------------------------------------------------------------
-lambda = mmWave_device.lambda;          % wavelength (m)
-d = lambda/2;                      % element spacing (m)  (ISK‑ODS)
-azGrid = -90:1:90;                      % scan grid (deg)
+lambda = mmWave_device.lambda;      % wavelength (m)
+d = lambda/2;                       % element spacing (m)  (ISK‑ODS)
+azGrid = -90:1:90;                  % scan grid (deg)
 La = numel(azGrid);                 % # angle bins
 jMin = 2;   
-jMax = 20;                % PMM fold search (same as before)
-snapWin = 8;                             % Doppler snapshots for R̂
-delta = 1e-3;                          % diagonal loading
-Td = ( mmWave_device.chirp_ramp_time + mmWave_device.chirp_idle_time )*1e-6 * mmWave_device.num_chirp_per_frame;  % s
-% Td = mmWave_device.frame_periodicity / 1000;   % msec → seconds || time between frames. the better one
+jMax = 20;                          % PMM fold search (same as before)
+snapWin = 8;                        % Doppler snapshots for R̂
+delta = 1e-3;                       % diagonal loading
+% Td = (mmWave_device.chirp_ramp_time + mmWave_device.chirp_idle_time) *1e-6 * mmWave_device.num_chirp_per_frame;  % s
+Td = mmWave_device.frame_periodicity / 1000;   % msec → seconds || time between frames. the better one
 
 % Pre‑compute steering matrix  A (Rx × La)
 k = 2*pi/lambda;
@@ -30,13 +30,14 @@ Rx = size(RDcube_cplx,3);
 A  = exp( 1j * k * d * (0:Rx-1).' * sind(azGrid) );
 
 %% 1.  Build the Angle–Time PMM (A‑PMM) matrix ----------------------------
-F = size(RDcube_cplx,4);     D = size(RDcube_cplx,2);
+F = size(RDcube_cplx,4);     
+D = size(RDcube_cplx,2);
 A_PMM = zeros(La, F);        % [angle × frame]
 
 for f = 1:F
     % --- 1.1  pick UAV‑related range bin (closest integer)
-    rBin = round( track_pf_range(f) / Rres ) + 1;
-    Xrd  = squeeze( RDcube_cplx(rBin, :, :, f) );     % [D × Rx]
+    rBin = round(track_pf_range(f) / Rres) + 1;     % UAV‑range bin
+    Xrd  = squeeze( RDcube_cplx(rBin, :, :, f) );   % [D × Rx]
     
     % --- 1.2  spatial covariance  (average small Doppler window)
     dMid      = round(D/2);
@@ -54,22 +55,8 @@ for f = 1:F
     
     % --- 1.5  PMM folding per angle
     for a = 1:La
-        dopplerSpectrum = abs( Y(:,a) ).';             % 1×D, row vector
-        bestScore = 0;
-
-        for j = jMin:jMax
-            M = floor(D / j);
-            if M < 1, break; end
-
-            Xcut = dopplerSpectrum(1:j*M);
-            Xmat = reshape(Xcut, j, M);                % j × M
-            colAvg = sum(Xmat, 2) ./ M;                % j × 1
-            score_j = max(colAvg);                     % peak alignment
-
-            bestScore = max(bestScore, score_j);
-        end
-
-        A_PMM(a,f) = bestScore;                        % folding result
+        dopSpec = abs( Y(:,a) ).';                  % 1×D
+        A_PMM(a,f) = spectrumFoldingPerDopSpec(dopSpec, jMin, jMax);
     end
 end
 
@@ -119,3 +106,19 @@ subplot(2,1,2);
 plot(timeAxis, azimuthTrack);
 xlabel('Time (s)'); ylabel('Azimuth (°)');
 title('Tracked UAV azimuth');
+
+
+function P = spectrumFoldingPerDopSpec(dopSpec, jMin, jMax)
+% dopSpec: 1×nDopplerFFT magnitude spectrum
+% jMin/jMax: range of integer fold sizes to search
+  n = length(dopSpec);
+  Pj = zeros(1,jMax-jMin+1);
+  for jj = jMin:jMax
+    L = floor(n/jj);
+    Dcut = dopSpec(1:jj*L);
+    Dmat = reshape(Dcut, jj, L);
+    % sum each row (align peaks), take the max row
+    Pj(jj-jMin+1) = max( sum(Dmat,2) );
+  end
+  P = max(Pj);  % best folding score
+end
