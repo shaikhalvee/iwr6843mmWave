@@ -42,8 +42,8 @@ for t = 2:F
         kmin = max(1, r - K);
         kmax = min(R, r + K);
         [bestPrev, idx] = max( theta(kmin:kmax, t-1) );
-        theta(r,t)     = bestPrev + Spp(r,t);
-        prev(r,t)      = kmin + idx - 1;
+        theta(r,t) = bestPrev + Spp(r,t);
+        prev(r,t) = kmin + idx - 1;
     end
 end
 
@@ -76,30 +76,42 @@ est = zeros(2, F);
 est(:,1) = [g_dp(1); 0];
 
 for t = 2:F
-  % 4.1 Predict
-  particles(1,:) = particles(1,:) + particles(2,:)*Td + sigma_r*randn(1,Np);
-  particles(2,:) = particles(2,:) + sigma_v*randn(1,Np);
+    % 4.1 Predict
+    particles(1,:) = particles(1,:) + particles(2,:)*Td + sigma_r*randn(1,Np);
+    particles(2,:) = particles(2,:) + sigma_v*randn(1,Np);
   
-  % 4.2 Update weights by likelihood ∝ cleaned PMM score
-  bin_idx = round( particles(1,:) );
-  bin_idx = min(max(bin_idx,1), R);    % clamp into [1,R]
-  likelihood = Spp( bin_idx, t ).';
-  weights = weights .* likelihood;
-  weights = weights + eps;              % avoid zeros
-  weights = weights / sum(weights);
-  
-  % 4.3 Resample (multinomial)
-  idx = randsample(1:Np, Np, true, weights);
-  particles = particles(:, idx);
-  weights = ones(1,Np)/Np;
-  
-  % 4.4 Estimate (weighted mean)
-  est(:,t) = particles * weights.';
+    % 4.2 Update weights by likelihood ∝ cleaned PMM score
+    bin_idx = round( particles(1,:) );
+    bin_idx = min(max(bin_idx,1), R);    % clamp into [1,R]
+    rawLik   = Spp( bin_idx, t ).';      % size 1×Np  (can be <0)
+    % likelihood = Spp( bin_idx, t ).';
+
+    % Shift & rectify so the minimum is small but positive
+    likelihood = max( rawLik - min(rawLik) , 0 ) + eps;
+    weights = weights .* likelihood;
+    
+    % Normalise; if degenerate, reset to uniform
+    sumw = sum(weights);
+    if sumw == 0 || ~isfinite(sumw)
+        weights = ones(1, Np) / Np;
+    else
+        weights = weights / sumw;
+    end
+
+    % 4.3 Resample (multinomial)
+    idx = randsample(1:Np, Np, true, weights);
+    particles = particles(:, idx);
+    weights = ones(1, Np) / Np;
+
+    % 4.4 Estimate (weighted mean)
+    est(:,t) = particles * weights.';
 end
 
 % convert particle-filter output to meters & m/s
 track_pf_range = range_bins( round(est(1,:)) );
 track_pf_vel   = (est(2,:) * Rres) / Td;
+
+save('output/UAVtracking', 'track_pf_range', 'track_pf_vel');
 
 %% 5. Plot everything
 t_axis = (0:F-1) * Td;
