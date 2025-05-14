@@ -9,7 +9,7 @@ function rdFFTViewer()
     velocities = S.velocities;
     limited_ranges = S.limited_ranges;
     range_idx = S.range_idx;
-    [numRangeBins, numDopplerBins, numFrames, numRx] = size(radar_cube);
+    [~, ~, numFrames, numRx] = size(radar_cube); % [numRangeBins, numDopplerBins, numFrames, numRx]
 
     % Data process
     % ranges = (1:numRangeBins-1) * range_res

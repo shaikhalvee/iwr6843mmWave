@@ -62,17 +62,6 @@ for rx = 1:rx_channels
 
         fft_complex_radar_cube(:, : , frame_index, rx) = range_doppler_fft;
         % fft_norm_radar_cube(:, : , frame_index, rx) = norm_fft;
-
-        % Display in dB with axes flipped to physical units:
-        % if showData
-        %     frame_data = 20*log10(fliplr(norm_fft(range_idx,:)));
-        %     imagesc(velocities, limited_ranges, frame_data);
-        %     set(gca, 'YDir','normal');
-        %     xlabel('Velocity (m/s)');
-        %     ylabel('Range (m)');
-        %     title(sprintf('Range–Doppler FFT (frame %d)', frame_index));
-        %     colorbar;  pause(0.1);
-        % end
         
     end
 end

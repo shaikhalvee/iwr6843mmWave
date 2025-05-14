@@ -22,12 +22,12 @@ Gvec = (Nvec' * PMM_combined) / (Nvec' * Nvec);  % [1×F]
 Spp = PMM_combined - Nvec * Gvec;     % [R×F]
 
 %% Dynamic-Programming 
-% UAV kinematics → maximum jump in bins between frames
+% UAV maximum jump in bins between frames
 Td = mmWave_device.frame_periodicity / 1000;   % msec → seconds || time between frames. the better one
 % Td = (mmWave_device.chirp_ramp_time + mmWave_device.chirp_idle_time) * 1e-6 * mmWave_device.num_chirp_per_frame;      % time between frames (s)
 Vmax  = mmWave_device.v_max;         % from your device struct (m/s)
 Rres  = mmWave_device.range_res;     % (m/bin)
-K     = ceil( Vmax * Td / Rres );    %
+K     = ceil(Vmax * Td / Rres);    %
 
 % allocate
 theta = zeros(R, F);      % best cumulative score ending at (r,t)
@@ -41,7 +41,7 @@ for t = 2:F
     for r = 1:R
         kmin = max(1, r - K);
         kmax = min(R, r + K);
-        [bestPrev, idx] = max( theta(kmin:kmax, t-1) );
+        [bestPrev, idx] = max(theta(kmin:kmax, t-1));
         theta(r,t) = bestPrev + Spp(r,t);
         prev(r,t) = kmin + idx - 1;
     end
@@ -59,9 +59,9 @@ range_bins = (0:R-1) * Rres;
 track_dp   = range_bins(g_dp);
 
 %% 4. Particle-Filter smoothing
-Np      = 5000;                 % number of particles
-particles = zeros(2, Np);       % rows = [range_bin; velocity_bin]
-weights   = ones(1, Np)/Np;     % uniform init
+Np = 5000;                  % number of particles
+particles = zeros(2, Np);   % rows = [range_bin; velocity_bin]
+weights = ones(1, Np)/Np;   % uniform init
 
 % process noise std
 sigma_r = 2;    % bins
@@ -69,7 +69,7 @@ sigma_v = 1;    % bins/sec
 
 % initialize around DP path first point
 particles(1,:) = g_dp(1) + sigma_r*randn(1,Np);
-particles(2,:) =   0  + sigma_v*randn(1,Np);
+particles(2,:) =   0     + sigma_v*randn(1,Np);
 
 % store estimates
 est = zeros(2, F);
@@ -82,7 +82,7 @@ for t = 2:F
   
     % 4.2 Update weights by likelihood ∝ cleaned PMM score
     bin_idx = round( particles(1,:) );
-    bin_idx = min(max(bin_idx,1), R);    % clamp into [1,R]
+    bin_idx = min(max(bin_idx,1), R);    % clamp into [1, R]
     rawLik   = Spp( bin_idx, t ).';      % size 1×Np  (can be <0)
     % likelihood = Spp( bin_idx, t ).';
 
@@ -91,14 +91,14 @@ for t = 2:F
     weights = weights .* likelihood;
     
     % Normalise; if degenerate, reset to uniform
-    sumw = sum(weights);
-    if sumw == 0 || ~isfinite(sumw)
+    sumW = sum(weights);
+    if sumW == 0 || ~isfinite(sumW)
         weights = ones(1, Np) / Np;
     else
-        weights = weights / sumw;
+        weights = weights / sumW;
     end
 
-    % 4.3 Resample (multinomial)
+    % 4.3 Resample (multinomial) 
     idx = randsample(1:Np, Np, true, weights);
     particles = particles(:, idx);
     weights = ones(1, Np) / Np;

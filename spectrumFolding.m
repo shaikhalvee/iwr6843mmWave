@@ -27,7 +27,7 @@ for f = 1:numFrames
             % dopplerSpectrum = 20*log10(fliplr(abs(fft_complex_radar_cube(r, :, f, rx))));
             dopplerSpectrum = fliplr(abs(fft_complex_radar_cube(r, :, f, rx))); 
             % usually it was done before. but for the sake of input sanitization, we're performing the abs.
-            
+
             bestScore = 0;
             % search over integer fold‐sizes j
             for j = jMin:jMax
@@ -35,17 +35,17 @@ for f = 1:numFrames
                 if M < 1
                     break;  % no valid folding for this j
                 end
-                 
+
                 % cut to an exact multiple of j, reshape into j×M
                 Xcut = dopplerSpectrum(1:(j*M));
                 Xmat = reshape(Xcut, j, M);
-                
+
                 % column‐wise average of aligned bins
                 colAvg = sum(Xmat, 2) ./ M;  
-                
+
                 % peak alignment score for this j
                 score_j = max(colAvg);
-                
+
                 bestScore = max(bestScore, score_j);
             end
             % PMM score saved for current range bin

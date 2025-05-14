@@ -52,12 +52,27 @@ for f = 1:F
     W     = Xa ./ denom;                        % Rx × La   (each col: w(θ))
     
     % --- 1.4  Beamform: Y(D × La)  =  Xrd * conj(w)
-    Y = Xrd * conj(W);                               % [D × La]
+    Y = Xrd * conj(W);                          % [D × La]
     
     % --- 1.5  PMM folding per angle
     for a = 1:La
-        dopSpec = abs( Y(:,a) ).';                  % 1×D
-        A_PMM(a,f) = spectrumFoldingPerDopSpec(dopSpec, jMin, jMax);
+        dopplerSpectrum = abs( Y(:,a) ).';             % 1×D, row vector
+        bestScore = 0;
+
+        for j = jMin:jMax
+            M = floor(D / j);
+            if M < 1 
+                break; 
+            end
+            Xcut = dopplerSpectrum(1:j*M);
+            Xmat = reshape(Xcut, j, M);                % j × M
+            colAvg = sum(Xmat, 2) ./ M;                % j × 1
+            score_j = max(colAvg);                     % peak alignment
+
+            bestScore = max(bestScore, score_j);
+        end
+
+        A_PMM(a,f) = bestScore;                        % folding result
     end
 end
 
@@ -108,18 +123,3 @@ plot(timeAxis, azimuthTrack);
 xlabel('Time (s)'); ylabel('Azimuth (°)');
 title('Tracked UAV azimuth');
 
-
-function P = spectrumFoldingPerDopSpec(dopSpec, jMin, jMax)
-% dopSpec: 1×nDopplerFFT magnitude spectrum
-% jMin/jMax: range of integer fold sizes to search
-  n = length(dopSpec);
-  Pj = zeros(1,jMax-jMin+1);
-  for jj = jMin:jMax
-    L = floor(n/jj);
-    Dcut = dopSpec(1:jj*L);
-    Dmat = reshape(Dcut, jj, L);
-    % sum each row (align peaks), take the max row
-    Pj(jj-jMin+1) = max( sum(Dmat,2) );
-  end
-  P = max(Pj);  % best folding score
-end
