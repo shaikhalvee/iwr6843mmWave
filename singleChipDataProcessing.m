@@ -34,7 +34,6 @@ range_idx      = ranges <= range_limit;
 limited_ranges = ranges(range_idx);
 
 % Pre-allocate storage for normalized FFT:
-% fft_2d_radar_cube = zeros(samples_per_chirp, chirps_per_frame, num_frames, rx_channels);
 fft_complex_radar_cube = zeros(samples_per_chirp, chirps_per_frame, num_frames, rx_channels);
 fft_norm_radar_cube = zeros(samples_per_chirp, chirps_per_frame, num_frames, rx_channels);
 

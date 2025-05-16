@@ -23,11 +23,11 @@ Spp = PMM_combined - Nvec * Gvec;     % [R×F]
 
 %% Dynamic-Programming 
 % UAV maximum jump in bins between frames
-Td = mmWave_device.frame_periodicity / 1000;   % msec → seconds || time between frames. the better one
-% Td = (mmWave_device.chirp_ramp_time + mmWave_device.chirp_idle_time) * 1e-6 * mmWave_device.num_chirp_per_frame;      % time between frames (s)
-Vmax  = mmWave_device.v_max;         % from your device struct (m/s)
-Rres  = mmWave_device.range_res;     % (m/bin)
-K     = ceil(Vmax * Td / Rres);    %
+Td = mmWave_device.frame_periodicity / 1000;% msec → seconds|time between frames. the better one
+% Td = (mmWave_device.chirp_ramp_time + mmWave_device.chirp_idle_time) * 1e-6 * mmWave_device.num_chirp_per_frame;
+Vmax = mmWave_device.v_max;         % from your device struct (m/s)
+Rres = mmWave_device.range_res;     % (m/bin)
+K = ceil(Vmax * Td / Rres);
 
 % allocate
 theta = zeros(R, F);      % best cumulative score ending at (r,t)
@@ -42,16 +42,16 @@ for t = 2:F
         kmin = max(1, r - K);
         kmax = min(R, r + K);
         [bestPrev, idx] = max(theta(kmin:kmax, t-1));
-        theta(r,t) = bestPrev + Spp(r,t);
-        prev(r,t) = kmin + idx - 1;
+        theta(r, t) = bestPrev + Spp(r, t);
+        prev(r, t) = kmin + idx - 1;
     end
 end
 
 % back-track to get the raw DP path g_dp
 g_dp = zeros(1, F);
-[~, g_dp(F)] = max(theta(:,F));
+[~, g_dp(F)] = max(theta(:, F));
 for t = F:-1:2
-  g_dp(t-1) = prev( g_dp(t), t );
+  g_dp(t-1) = prev(g_dp(t), t);
 end
 
 % convert bin-indices → range (m)
@@ -77,17 +77,17 @@ est(:,1) = [g_dp(1); 0];
 
 for t = 2:F
     % 4.1 Predict
-    particles(1,:) = particles(1,:) + particles(2,:)*Td + sigma_r*randn(1,Np);
-    particles(2,:) = particles(2,:) + sigma_v*randn(1,Np);
-  
-    % 4.2 Update weights by likelihood ∝ cleaned PMM score
-    bin_idx = round( particles(1,:) );
+    particles(1,:) = particles(1,:) + particles(2,:) * Td + sigma_r * randn(1,Np);
+    particles(2,:) = particles(2,:) + sigma_v * randn(1,Np);
+
+    % 4.2 Update weights by likelihood -> cleaned PMM score
+    bin_idx = round(particles(1,:));
     bin_idx = min(max(bin_idx,1), R);    % clamp into [1, R]
-    rawLik   = Spp( bin_idx, t ).';      % size 1×Np  (can be <0)
+    rawLikelihood   = Spp( bin_idx, t ).';      % size 1×Np  (can be <0)
     % likelihood = Spp( bin_idx, t ).';
 
     % Shift & rectify so the minimum is small but positive
-    likelihood = max( rawLik - min(rawLik) , 0 ) + eps;
+    likelihood = max(rawLikelihood - min(rawLikelihood) , 0 ) + eps;
     weights = weights .* likelihood;
     
     % Normalise; if degenerate, reset to uniform
@@ -108,8 +108,8 @@ for t = 2:F
 end
 
 % convert particle-filter output to meters & m/s
-track_pf_range = range_bins( round(est(1,:)) );
-track_pf_vel   = (est(2,:) * Rres) / Td;
+track_pf_range = range_bins(round(est(1,:)));
+track_pf_vel = (est(2,:) * Rres); % / Td;
 
 save('output/UAVtracking', 'track_pf_range', 'track_pf_vel');
 
