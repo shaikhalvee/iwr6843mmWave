@@ -1,5 +1,5 @@
 %% Maximum Path Search & Particle Filtering
-clear all;
+clear var;
 
 
 % load variables
