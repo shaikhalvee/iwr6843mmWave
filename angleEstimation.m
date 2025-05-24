@@ -6,7 +6,7 @@
 %   mmWave_device    % has .lambda
 % ------------------------------------------------------------
 
-clear all;
+clearvars;
 
 %% Load Data
 S = load('output/fft_result_cube.mat');
@@ -151,6 +151,9 @@ for t = 2:F
   % 3.1 Predict
   particlesA(1,:) = particlesA(1,:) + particlesA(2,:) * Td + sigma_a * randn(1,NpA);
   particlesA(2,:) = particlesA(2,:) + sigma_omega * randn(1,NpA);
+
+  % keep angle-bin inside [1 , La]
+  particlesA(1,:) = min( max(particlesA(1,:), 1), La );
   
   % 3.2 Update weights by likelihood ∝ Sang(bin, t)
   bin_idx = round(particlesA(1,:));

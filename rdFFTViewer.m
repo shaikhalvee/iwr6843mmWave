@@ -9,6 +9,7 @@ function rdFFTViewer()
     velocities = S.velocities;
     limited_ranges = S.limited_ranges;
     range_idx = S.range_idx;
+    mmWave_device = S.mmWave_device;
     [~, ~, numFrames, numRx] = size(radar_cube); % [numRangeBins, numDopplerBins, numFrames, numRx]
 
     % Data process
@@ -68,4 +69,6 @@ function rdFFTViewer()
         title(hAx,sprintf('RD FFT — RX %d, Frame %d', rx, frame));
         colorbar('peer',hAx);
     end
+
+    disp[''];
 end

@@ -1,7 +1,7 @@
 classdef iwr6843Device
     properties
         %— RF parameters and derived metrics —%
-        freq
+        start_freq
         lambda 
         aoa_angle 
         num_angle
@@ -14,7 +14,7 @@ classdef iwr6843Device
         num_frame
         num_sample_per_frame
         size_per_frame
-        num_sample_per_chirp
+        num_adc_sample_per_chirp
         num_chirp_per_frame
         adc_samp_rate
         adc_bits
@@ -38,8 +38,8 @@ classdef iwr6843Device
             sys_param_json = jsondecode(fileread(mmwave_setup_json_file));
 
             % RF center frequency & wavelength:
-            obj.freq   = sys_param_json.mmWaveDevices.rfConfig.rlProfiles.rlProfileCfg_t.startFreqConst_GHz * 1e9;
-            obj.lambda = physconst('LightSpeed') / obj.freq;
+            obj.start_freq   = sys_param_json.mmWaveDevices.rfConfig.rlProfiles.rlProfileCfg_t.startFreqConst_GHz * 1e9;
+            obj.lambda = physconst('LightSpeed') / obj.start_freq;
 
             % Angle‐of‐arrival grid (0°–180°):
             obj.aoa_angle = 0:1:180;  
@@ -51,19 +51,19 @@ classdef iwr6843Device
             obj.num_rx_chnl         = sum(obj.rx_chanl_enable);
 
             % Chirp/frame parameters:
-            obj.num_sample_per_chirp  = sys_param_json.mmWaveDevices.rfConfig.rlProfiles.rlProfileCfg_t.numAdcSamples;
+            obj.num_adc_sample_per_chirp  = sys_param_json.mmWaveDevices.rfConfig.rlProfiles.rlProfileCfg_t.numAdcSamples;
             obj.num_chirp_per_frame   = sys_param_json.mmWaveDevices.rfConfig.rlFrameCfg_t.numLoops;
-            obj.win_hann              = hanning(obj.num_sample_per_chirp);
+            obj.win_hann              = hanning(obj.num_adc_sample_per_chirp);
 
             % Compute bytes/frame & frame count from file size:
-            obj.size_per_frame = obj.num_byte_per_sample * obj.num_rx_chnl * obj.num_sample_per_chirp * obj.num_chirp_per_frame;
+            obj.size_per_frame = obj.num_byte_per_sample * obj.num_rx_chnl * obj.num_adc_sample_per_chirp * obj.num_chirp_per_frame;
             try
                 bin_file = dir(adc_data_bin_file);
             catch
                 error('Reading Bin file failed')
             end
             obj.num_frame = floor(bin_file.bytes / obj.size_per_frame);
-            obj.num_sample_per_frame = obj.num_rx_chnl * obj.num_chirp_per_frame * obj.num_sample_per_chirp;
+            obj.num_sample_per_frame = obj.num_rx_chnl * obj.num_chirp_per_frame * obj.num_adc_sample_per_chirp;
 
             % ADC sampling rate & bits:
             obj.adc_samp_rate = sys_param_json.mmWaveDevices.rfConfig.rlProfiles.rlProfileCfg_t.digOutSampleRate/1000;
@@ -74,7 +74,7 @@ classdef iwr6843Device
 
             % Bandwidth & timing:
             obj.chirp_slope         = sys_param_json.mmWaveDevices.rfConfig.rlProfiles.rlProfileCfg_t.freqSlopeConst_MHz_usec;
-            obj.bandwidth           = obj.chirp_slope * obj.num_sample_per_chirp / obj.adc_samp_rate;
+            obj.bandwidth           = obj.chirp_slope * obj.num_adc_sample_per_chirp / obj.adc_samp_rate;
             obj.chirp_ramp_time     = sys_param_json.mmWaveDevices.rfConfig.rlProfiles.rlProfileCfg_t.rampEndTime_usec;
             obj.chirp_idle_time     = sys_param_json.mmWaveDevices.rfConfig.rlProfiles.rlProfileCfg_t.idleTimeConst_usec;
             obj.chirp_adc_start_time = sys_param_json.mmWaveDevices.rfConfig.rlProfiles.rlProfileCfg_t.adcStartTimeConst_usec;

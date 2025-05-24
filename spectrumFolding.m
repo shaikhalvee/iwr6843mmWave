@@ -1,6 +1,6 @@
 %% Spectrum Folding
 
-clear all;
+clearvars;
 
 % load variables
 S = load('output/fft_result_cube.mat');

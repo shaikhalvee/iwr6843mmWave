@@ -80,6 +80,9 @@ for t = 2:F
     particles(1,:) = particles(1,:) + particles(2,:) * Td + sigma_r * randn(1,Np);
     particles(2,:) = particles(2,:) + sigma_v * randn(1,Np);
 
+    % Keep range-bin state in [1 , R]
+    particles(1,:) = min( max(particles(1,:), 1), R );
+
     % 4.2 Update weights by likelihood -> cleaned PMM score
     bin_idx = round(particles(1,:));
     bin_idx = min(max(bin_idx,1), R);    % clamp into [1, R]
@@ -92,11 +95,12 @@ for t = 2:F
     
     % Normalise; if degenerate, reset to uniform
     sumW = sum(weights);
-    if sumW == 0 || ~isfinite(sumW)
-        weights = ones(1, Np) / Np;
-    else
-        weights = weights / sumW;
-    end
+    weights = weights / sumW;
+    % if sumW == 0 || ~isfinite(sumW)
+    %     weights = ones(1, Np) / Np;
+    % else
+    %     weights = weights / sumW;
+    % end
 
     % 4.3 Resample (multinomial) 
     idx = randsample(1:Np, Np, true, weights);
@@ -108,8 +112,9 @@ for t = 2:F
 end
 
 % convert particle-filter output to meters & m/s
-track_pf_range = range_bins(round(est(1,:)));
-track_pf_vel = (est(2,:) * Rres); % / Td;
+% track_pf_range = range_bins(round(est(1,:)));
+track_pf_range = est(1,:) * Rres;
+track_pf_vel = est(2,:) * Rres; % / Td;
 
 save('output/UAVtracking', 'track_pf_range', 'track_pf_vel');
 

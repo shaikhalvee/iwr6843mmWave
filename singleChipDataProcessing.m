@@ -1,4 +1,5 @@
-showData = 0;
+close all;
+clearvars;
 
 mmwave_json_file_name = GET_MMWAVE_SETUP_JSON_FILE();
 adc_bin_file_name   = GET_ADC_DATA_BIN_FILE();
@@ -67,4 +68,4 @@ end
 
 
 % Save for CFAR processing:
-save('output/fft_result_cube.mat', 'fft_complex_radar_cube', 'mmWave_device', 'velocities', 'limited_ranges', 'range_idx');
+save('output/fft_result_cube.mat', 'fft_complex_radar_cube', 'mmWave_device', 'velocities', 'limited_ranges', 'range_idx', '-v7.3');

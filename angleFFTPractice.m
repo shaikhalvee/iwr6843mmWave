@@ -1,4 +1,4 @@
-clear all;
+clearvars;
 
 %% Load Data
 S = load('output/fft_result_cube.mat');
