@@ -2,7 +2,7 @@
 function launchPostProcessingGUI(obj)
     % Interactive RD FFT viewer with RX dropdown & frame slider
     outDir = fullfile('output', obj.device.testRootPath);     % or pass it in
-    S = load(fullfile(outDir,'rdMaps.mat'), 'rdCube','range_res','velocities');
+    S = load(fullfile(outDir,'rangeDopplerMap.mat'), 'rangeDopplerFFTData','range_res','velocities');
     cube       = S.rangeDopplerFFTData;
     res        = S.range_res;
     vel        = S.velocities;
