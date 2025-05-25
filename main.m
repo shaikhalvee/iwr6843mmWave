@@ -1,6 +1,9 @@
 %% File: main.m
 % Entry point for unified pipeline
-setupFile = "D:\Documents\Drone_Data\single_chip\drone_21_5_2025_60ms\capture_config.setup.json";   % Setup JSON (includes bin list & config)
+setupFile = "D:\Documents\Drone_Data\single_chip\drn_25_5_2025_70m_2\capture.setup.json";   % Setup JSON (includes bin list & config)
+
+[testRootFolder, ~, ~] = fileparts(setupFile);
+[~, testRoot] = fileparts(testRootFolder);
 
 % Outputs
 saveRaw = 'rawData.mat';
@@ -15,7 +18,10 @@ pipeline = ProcessingPipeline(device);
 pipeline.exportAll(saveRaw, save1D, save2D);
 
 % Launch GUI
-launchPostProcessingGUI(pipeline);
+% launchPostProcessingGUI(pipeline);
+% rdFFTViewer(pipeline);
+rdFFTViewer(testRoot)
+
 
 % Cleanup
 device.closeFiles();

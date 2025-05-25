@@ -50,48 +50,57 @@ classdef ProcessingPipeline
             D = obj.device.num_chirp_per_frame;
             X = obj.device.num_rx_chnl;
 
-            % save out
+            % make output folder
             outputDir = fullfile('output', obj.device.testRootPath);
-            if ~exist(outputDir,'dir'), mkdir(outputDir); end
+            if ~exist(outputDir,'dir')
+                mkdir(outputDir);
+            end
 
-            %--- full paths to save files ---
-            rawPath  = fullfile(outputDir, saveRaw);
-            fft1DPath= fullfile(outputDir, save1D);
-            rd2DPath = fullfile(outputDir, save2D);
+            % build full paths
+            rawPath   = fullfile(outputDir, saveRaw);
+            fft1DPath = fullfile(outputDir, save1D);
+            rd2DPath  = fullfile(outputDir, save2D);
 
-            % pre-allocate storage for Range-Doppler directly
-            adcBinRaw            = cell(1, F);
-            rangeFFTData         = cell(1, F);
-            rangeDopplerFFTData  = zeros(R, D, X, F, 'single');
+            %% 1) If an old RD-FFT file exists, remove it
+            if exist(rd2DPath, 'file')
+                delete(rd2DPath);
+            end
 
+            %% 2) Pre-create the new MAT-file with v7.3, correct types & metadata
+            rangeDopplerFFTData = complex(zeros(R, D, X, F, 'single'));  %# allocate single cube
+            mmWaveDevice = obj.device;
 
+            % this save both creates the file and sets up the variables with proper types
+            save(rd2DPath, ...
+                'rangeDopplerFFTData', ...
+                'mmWaveDevice', ...
+                '-v7.3');
+
+            %% 3) Re-open it for streaming writes
+            mf = matfile(rd2DPath, 'Writable', true);
+
+            % prepare your RAW and 1D-FFT containers
+            adcBinRaw    = cell(1, F);
+            rangeFFTData = cell(1, F);
+
+            % loop over frames
             for f = 1:F
                 rawFrame = obj.device.readRawFrame(f);
                 adcBinRaw{f} = rawFrame;
 
-                % compute both at once
                 [rangeFFTFrame, rdFFTFrame] = obj.computeRangeDoppler(rawFrame);
-
-                % store
                 rangeFFTData{f} = rangeFFTFrame;
-                rangeDopplerFFTData(:,:,:,f) = single(rdFFTFrame);
+
+                % write just this slice into the on-disk single cube
+                mf.rangeDopplerFFTData(:,:,:,f) = single(rdFFTFrame);
             end
 
-           
+            %% 4) Save the RAW & 1D-FFT cell arrays in the same folder
             if ~isempty(saveRaw)
-                save(rawPath, 'adcBinRaw', '-v7.3');
+                save(rawPath,   'adcBinRaw',    '-v7.3');
             end
             if ~isempty(save1D)
                 save(fft1DPath, 'rangeFFTData', '-v7.3');
-            end
-            if ~isempty(save2D)
-                % also export axes
-                range_res  = obj.device.range_res;
-                v_res      = obj.device.v_res;
-                v_max      = obj.device.v_max;
-                velocities = -v_max : v_res : (v_max - v_res);
-                save(rd2DPath, 'rangeDopplerFFTData', 'range_res', ...
-                    'v_res', 'velocities', '-v7.3');
             end
         end
     end

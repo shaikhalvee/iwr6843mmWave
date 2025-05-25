@@ -3,14 +3,18 @@
 clear all;
 
 % load variables
-S = load('output/fft_result_cube.mat');
-fft_complex_radar_cube = S.fft_complex_radar_cube;
+outDir = fullfile('D:\Documents\MATLAB\iwr6843\output\drone_21_5_2025_60ms');
+S = load(fullfile(outDir,'rangeDopplerMap.mat'), 'rangeDopplerFFTData','mmWaveDevice');
+% S = load('output/fft_result_cube.mat');
+% fft_complex_radar_cube = S.fft_complex_radar_cube;
+
+fft_complex_radar_cube = S.rangeDopplerFFTData;
 
 %--- PARAMETERS ---------------------
 jMin = 2;          % minimum fold size
 jMax = 20;         % maximum fold size
 
-[numRangeBins, numDopplerBins, numFrames, numRx] = size(fft_complex_radar_cube);
+[numRangeBins, numDopplerBins, numRx, numFrames] = size(fft_complex_radar_cube);
 
 % take normalized values
 % mag = abs(fft_complex_radar_cube);
@@ -25,7 +29,7 @@ for f = 1:numFrames
         for r = 1:numRangeBins
             % 1×D Doppler‐spectrum magnitude at (r,f,rx)
             % dopplerSpectrum = 20*log10(fliplr(abs(fft_complex_radar_cube(r, :, f, rx))));
-            dopplerSpectrum = fliplr(abs(fft_complex_radar_cube(r, :, f, rx))); 
+            dopplerSpectrum = fliplr(abs(fft_complex_radar_cube(r, :, rx, f))); 
             % usually it was done before. but for the sake of input sanitization, we're performing the abs.
 
             bestScore = 0;

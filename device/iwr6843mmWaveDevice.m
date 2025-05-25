@@ -120,7 +120,8 @@ classdef iwr6843mmWaveDevice
                 obj.binFileNames{i} = fn;
                 obj.fidBin(i) = fopen(fn,'r');
                 finfo = dir(fn);
-                frames = floor(finfo.bytes / obj.size_per_frame);
+                frameSize = finfo.bytes / obj.size_per_frame;
+                frames = floor(frameSize);
                 obj.numFramePerFile(i) = frames;
                 cur_frame = cur_frame + frames;
             end

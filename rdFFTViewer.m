@@ -1,22 +1,29 @@
 % get single chip adc data from /output. 
 % visualize per Rx per Tx data
 
-function rdFFTViewer()
+function rdFFTViewer(testRoot)
     % Load the precomputed RD FFT cube
-    S = load('output/fft_result_cube.mat');
-    radar_cube = S.fft_complex_radar_cube;
-    radar_cube = abs(radar_cube);
-    velocities = S.velocities;
-    limited_ranges = S.limited_ranges;
-    range_idx = S.range_idx;
-    [~, ~, numFrames, numRx] = size(radar_cube); % [numRangeBins, numDopplerBins, numFrames, numRx]
+    outDir = fullfile('output', testRoot);
+    % S = load('output/fft_result_cube.mat');
+    S = load(fullfile(outDir,'rangeDopplerMap.mat'), 'rangeDopplerFFTData','mmWaveDevice');
+    % radar_cube = S.fft_complex_radar_cube;
+    
+    radar_cube = abs(S. rangeDopplerFFTData);
+    mmWaveDevice = S.mmWaveDevice;
 
-    % Data process
-    % ranges = (1:numRangeBins-1) * range_res
+    ranges = (1:mmWaveDevice.num_adc_sample_per_chirp-1) * mmWaveDevice.range_res;
+    velocities = -mmWaveDevice.v_max : mmWaveDevice.v_res : (mmWaveDevice.v_max - mmWaveDevice.v_res);
+    range_limit = 70;  % meters
+    range_idx = ranges <= range_limit;
+    limited_ranges = ranges(range_idx);
+
+    % limited_ranges = S.limited_ranges;
+    % range_idx = S.range_idx;
+    [~, ~, numRx, numFrames] = size(radar_cube); % [numRangeBins, numDopplerBins, numFrames, numRx]
 
     % Create figure and axes
     hFig = figure('Name','Range–Doppler FFT Viewer','NumberTitle','off');
-    hAx  = axes('Parent',hFig, 'Position',[0.1 0.25 0.85 0.7]);
+    hAx  = axes('Parent',hFig, 'Position', [0.1 0.25 0.85 0.7]);
 
     % Dropdown (popup) menu for RX channel selection
     rxList = arrayfun(@(x)sprintf('RX %d',x), 1:numRx, 'UniformOutput',false);
@@ -51,13 +58,13 @@ function rdFFTViewer()
 
     function updatePlot(~,~)
         % Read UI values
-        rx    = get(hPopup,'Value');
-        frame   = round(get(hSlider,'Value'));
+        rx = get(hPopup,'Value');
+        frame = round(get(hSlider,'Value'));
         set(hTxt,'String',sprintf('Frame: %d',frame));
 
         % Extract the RD FFT slice for (range × doppler)
-        rdSlice = fliplr(radar_cube(range_idx,:, frame, rx));
-        % rdSlice = 20*log10(fliplr(radar_cube(range_idx,:, frame, rx)));
+        rdSlice = fliplr(radar_cube(range_idx,:, rx, frame));
+        % rdSlice = 20*log10(fliplr(radar_cube(range_idx,:, rx, frame)));
         % frame_data = 20*log10(fliplr(norm_fft(range_idx,:)));
 
         % Display
