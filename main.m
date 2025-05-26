@@ -1,6 +1,6 @@
 %% File: main.m
 % Entry point for unified pipeline
-setupFile = "D:\Documents\Drone_Data\single_chip\drn_25_5_2025_70m_2\capture.setup.json";   % Setup JSON (includes bin list & config)
+setupFile = "D:\Documents\Drone_Data\single_chip\drn_25_5_2025\capture.setup.json";   % Setup JSON (includes bin list & config)
 
 [testRootFolder, ~, ~] = fileparts(setupFile);
 [~, testRoot] = fileparts(testRootFolder);

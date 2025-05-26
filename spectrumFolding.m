@@ -3,10 +3,14 @@
 clear all;
 
 % load variables
-outDir = fullfile('D:\Documents\MATLAB\iwr6843\output\drone_21_5_2025_60ms');
+testFolder = 'drn_25_5_2025';
+
+outDir = fullfile('output', testFolder);
 S = load(fullfile(outDir,'rangeDopplerMap.mat'), 'rangeDopplerFFTData','mmWaveDevice');
 % S = load('output/fft_result_cube.mat');
 % fft_complex_radar_cube = S.fft_complex_radar_cube;
+
+sprintf("%d", S.mmWaveDevice.range_res);
 
 fft_complex_radar_cube = S.rangeDopplerFFTData;
 
@@ -58,16 +62,17 @@ for f = 1:numFrames
     end
 end
 
-save('output/PMMmap', 'PMMmap');
+outFile = fullfile(outDir, 'PMMmap.mat');
+save(outFile, 'PMMmap');
 
 %--- combine across Rx channels -------------
 % e.g. take maximum across Rx
-PMM_combined = max(PMMmap, [], 3);   % size = [R × F]
-
-% visualize the Range–Time PMM heat‐map
-imagesc((1:numFrames), (1:numRangeBins/4), PMM_combined(1:numRangeBins/4,:));
-axis xy;
-xlabel('Frame index');
-ylabel('Range bin');
-title('Range–Time PMM folding map');
-colorbar;
+% PMM_combined = max(PMMmap, [], 3);   % size = [R × F]
+% 
+% % visualize the Range–Time PMM heat‐map
+% imagesc((1:numFrames), (1:numRangeBins), PMM_combined(1:numRangeBins,:));
+% axis xy;
+% xlabel('Frame index');
+% ylabel('Range bin');
+% title('Range–Time PMM folding map', testFolder);
+% colorbar;
