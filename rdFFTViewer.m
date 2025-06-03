@@ -4,7 +4,6 @@
 function rdFFTViewer(testRoot)
     % Load the precomputed RD FFT cube
     outDir = fullfile('output', testRoot);
-    % S = load('output/fft_result_cube.mat');
     S = load(fullfile(outDir,'rangeDopplerMap.mat'), 'rangeDopplerFFTData','mmWaveDevice');
     % radar_cube = S.fft_complex_radar_cube;
     
@@ -13,7 +12,7 @@ function rdFFTViewer(testRoot)
 
     ranges = (1:mmWaveDevice.num_adc_sample_per_chirp-1) * mmWaveDevice.range_res;
     velocities = -mmWaveDevice.v_max : mmWaveDevice.v_res : (mmWaveDevice.v_max - mmWaveDevice.v_res);
-    range_limit = 70;  % meters
+    range_limit = 20;  % meters
     range_idx = ranges <= range_limit;
     limited_ranges = ranges(range_idx);
 
@@ -63,9 +62,9 @@ function rdFFTViewer(testRoot)
         set(hTxt,'String',sprintf('Frame: %d',frame));
 
         % Extract the RD FFT slice for (range × doppler)
-        rdSlice = fliplr(radar_cube(range_idx,:, rx, frame));
-        % rdSlice = 20*log10(fliplr(radar_cube(range_idx,:, rx, frame)));
-        % frame_data = 20*log10(fliplr(norm_fft(range_idx,:)));
+        rdSlice = radar_cube(range_idx,:, rx, frame);
+        % rdSlice = 20*log10(radar_cube(range_idx,:, rx, frame));
+        % frame_data = 20*log10(norm_fft(range_idx,:));
 
         % Display
         imagesc(hAx, velocities, limited_ranges, rdSlice);

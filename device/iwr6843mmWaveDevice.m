@@ -1,4 +1,4 @@
-% iwr6843mmWaveDevice
+%% iwr6843mmWaveDevice
 
 classdef iwr6843mmWaveDevice
     % Handles JSON parsing, unit conversion, multi‑file .bin I/O
@@ -134,8 +134,8 @@ classdef iwr6843mmWaveDevice
             % Range & velocity calculations
             obj.range_max = physconst('LightSpeed') * obj.adc_samp_rate*1e6 / (2 * obj.chirp_slope*1e6 * 1e6);
             obj.range_res = physconst('LightSpeed') / (2 * obj.bandwidth*1e6);
-            obj.v_max     = obj.lambda / (4*(obj.chirp_cycle_time)/1e6);
-            obj.v_res     = obj.lambda / (2*obj.num_chirp_per_frame*(obj.chirp_cycle_time)/1e6);
+            obj.v_max = obj.lambda / (4*(obj.chirp_cycle_time)/1e6);
+            obj.v_res = obj.lambda / (2*obj.num_chirp_per_frame*(obj.chirp_cycle_time)/1e6);
 
             % Flags
             obj.is_iq_swap    = devDatafmtCfg.iqSwapSel;

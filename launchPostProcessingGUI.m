@@ -1,12 +1,13 @@
 %% File: launchPostProcessingGUI.m
-function launchPostProcessingGUI(obj)
+function launchPostProcessingGUI(testRoot)
     % Interactive RD FFT viewer with RX dropdown & frame slider
-    outDir = fullfile('output', obj.device.testRootPath);     % or pass it in
-    S = load(fullfile(outDir,'rangeDopplerMap.mat'), 'rangeDopplerFFTData','range_res','velocities');
-    cube       = S.rangeDopplerFFTData;
-    res        = S.range_res;
-    vel        = S.velocities;
-    [R,D,F,X]  = size(cube);
+    outDir = fullfile('output', testRoot);
+    S = load(fullfile(outDir,'rangeDopplerMap.mat'), 'rangeDopplerFFTData','mmWaveDevice');
+    cube       = abs(S.rangeDopplerFFTData);
+    mmWaveDevice = S.mmWaveDevice;
+    res        = mmWaveDevice.range_res;
+    vel        = -mmWaveDevice.v_max : mmWaveDevice.v_res : (mmWaveDevice.v_max - mmWaveDevice.v_res);
+    [R,~,X,F]  = size(cube);
 
     % Build masked ranges
     ranges = (0:R-1)*res;
@@ -31,7 +32,7 @@ function launchPostProcessingGUI(obj)
         rxVal = findobj('Tag','rxMenu'); ch = rxVal.Value;
         slVal = findobj('Tag','frameSlider'); frm = round(slVal.Value);
         txt.String = sprintf('Frame:%d',frm);
-        img = squeeze(cube(:,:,frm,ch));
+        img = squeeze(cube(:,:,ch,frm));
         imagesc(ax,vel,ranges,img);
         set(ax,'YDir','normal');
         xlabel(ax,'Velocity (m/s)'); ylabel(ax,'Range (m)');
