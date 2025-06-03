@@ -28,7 +28,7 @@ function [RD_map, range_axis, doppler_axis] = calc_range_doppler_bmfrm(adc_cube,
     fs = paramsConfig.Sampling_Rate_ksps * 1e3;
     slope = paramsConfig.Slope_MHzperus * 1e12;
     range_axis = (0:paramsConfig.rangeFFTSize-1) * c * fs / (2 * slope * paramsConfig.rangeFFTSize);
-    PRF = 1e6 / (paramsConfig.Idle_Time_us + paramsConfig.Ramp_End_Time_us);
+    % PRF = 1e6 / (paramsConfig.Idle_Time_us + paramsConfig.Ramp_End_Time_us);
     v_max = c * paramsConfig.Slope_MHzperus * 1e6 / (2 * paramsConfig.Start_Freq_GHz * 1e9);
     doppler_axis = linspace(-v_max, v_max, paramsConfig.nchirp_loops);
 end
