@@ -1,4 +1,4 @@
-%% File: main.m
+%% File: mmHawkeyeMain.m
 
 clearvars;
 
