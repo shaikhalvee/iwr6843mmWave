@@ -1,6 +1,6 @@
 %% Spectrum Folding
 
-clear all;
+clearvars;
 
 % load variables
 testFolder = 'drn_25_5_2025';

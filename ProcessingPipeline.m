@@ -45,10 +45,11 @@ classdef ProcessingPipeline
         end
 
         function exportAll(obj, saveRaw, save1D, save2D)
-            F = obj.device.total_frames;
-            R = 2^nextpow2(obj.device.num_adc_sample_per_chirp);
-            D = obj.device.num_chirp_per_frame;
-            X = obj.device.num_rx_chnl;
+            mmWaveDevice = obj.device;
+            F = mmWaveDevice.total_frames;
+            R = 2^nextpow2(mmWaveDevice.num_adc_sample_per_chirp);
+            D = mmWaveDevice.num_chirp_per_frame;
+            X = mmWaveDevice.num_rx_chnl;
 
             % make output folder
             outputDir = fullfile('output', obj.device.testRootPath);
@@ -68,7 +69,7 @@ classdef ProcessingPipeline
 
             %% 2) Pre-create the new MAT-file with v7.3, correct types & metadata
             rangeDopplerFFTData = complex(zeros(R, D, X, F, 'single'));  %# allocate single cube
-            mmWaveDevice = obj.device;
+            
 
             % this save both creates the file and sets up the variables with proper types
             save(rd2DPath, ...

@@ -12,8 +12,13 @@ function params = chirpProfile_TxBF_SingleAngle(degree)
 %
 %   -- All settings use the TI Cascade LRR default, except only one angle. --
 
+
+    % TI 4-Chip Cascade board reference
+    platform = 'TI_4Chip_CASCADE';
+
     % Antenna geometry: 12 TX positions on TI 4-chip cascade EVM
     TI_Cascade_TX_position_azi = [11 10 9 32 28 24 20 16 12 8 4 0];
+    TI_Cascade_TX_position_ele = [6 4 1 0 0 0 0 0 0 0 0 0];
     TI_Cascade_Antenna_DesignFreq = 76.8; % GHz
 
     % 1. TX selection and geometry

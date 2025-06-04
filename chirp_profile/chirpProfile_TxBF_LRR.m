@@ -128,8 +128,7 @@ function [params] = chirpProfile_TxBF_LRR()
     end
     
     % Frame repetition time in ms
-    params.Frame_Repetition_Period_ms = ...
-        params.SF1SubFramePeriodicity / 200 / 1000;
+    params.Frame_Repetition_Period_ms = params.SF1SubFramePeriodicity / 200 / 1000;
 
     %% Algorithm / FFT parameters
     params.ApplyRangeDopplerWind = 1;
