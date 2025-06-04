@@ -24,11 +24,14 @@ function [RD_map, range_axis, doppler_axis] = calc_range_doppler_bmfrm(adc_cube,
     RD_map = squeeze(sum(abs(doppler_fft), 3)); % [range, doppler]
 
     % Axes
-    c = 3e8;
+    c = physconst('LightSpeed');
     fs = paramsConfig.Sampling_Rate_ksps * 1e3;
     slope = paramsConfig.Slope_MHzperus * 1e12;
     range_axis = (0:paramsConfig.rangeFFTSize-1) * c * fs / (2 * slope * paramsConfig.rangeFFTSize);
     % PRF = 1e6 / (paramsConfig.Idle_Time_us + paramsConfig.Ramp_End_Time_us);
-    v_max = c * paramsConfig.Slope_MHzperus * 1e6 / (2 * paramsConfig.Start_Freq_GHz * 1e9);
+    PRT = (paramsConfig.Idle_Time_us + paramsConfig.Ramp_End_Time_us) * 1e-6;
+    lambda = c / (paramsConfig.Start_Freq_GHz * 1e9);
+    v_max = lambda / (4 * PRT);
+    % v_max = c * paramsConfig.Slope_MHzperus * 1e6 / (2 * paramsConfig.Start_Freq_GHz * 1e9);
     doppler_axis = linspace(-v_max, v_max, paramsConfig.nchirp_loops);
 end
