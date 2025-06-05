@@ -15,7 +15,7 @@ paramsConfig = get_radar_config(adc_data_folder);
 
 % paramsConfig = struct;
 % I shouldn't repopulate here
-paramsConfig.anglesToSteer = -23.45;   % Only the single angle you captured!
+paramsConfig.anglesToSteer = -23.45;
 paramsConfig.NumAnglesToSweep = 1;
 paramsConfig.Chirp_Frame_BF = 0;       % Only frame-based supported
 

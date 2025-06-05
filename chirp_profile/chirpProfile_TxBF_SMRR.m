@@ -46,7 +46,7 @@
 %   - Derived data like range resolution
 %--------------------------------------------------------------------------
 
-function [params] = chirpProfile_TxBF_SMRR()
+function [params] = chirpProfile_TxBF_SMRR(angles)
 
     % TI 4-Chip Cascade board reference
     platform = 'TI_4Chip_CASCADE';
@@ -74,7 +74,11 @@ function [params] = chirpProfile_TxBF_SMRR()
 
     %% Define beam steering angles
     % We sweep from -30° to +30°, in steps of 2°. 'NumAnglesToSweep' is derived.
-    params.anglesToSteer = [-30:2:30];
+    if isempty(angles)
+        params.anglesToSteer = -30:2:30;
+    else
+        params.anglesToSteer = angles;  % Use provided angles if not empty
+    end
     params.NumAnglesToSweep = length(params.anglesToSteer);
 
     %% Chirp/Profile parameters

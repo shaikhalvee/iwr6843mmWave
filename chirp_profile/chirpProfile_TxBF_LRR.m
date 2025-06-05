@@ -45,7 +45,13 @@
 %   - Derived data like range resolution
 %--------------------------------------------------------------------------
 
-function [params] = chirpProfile_TxBF_LRR()
+function [params] = chirpProfile_TxBF_LRR(angles)
+
+    if isempty(angles)
+        params.anglesToSteer = -30:2:30;
+    else
+        params.anglesToSteer = angles; % Use provided angles if not empty
+    end
 
     % TI 4-Chip Cascade board reference
     platform = 'TI_4Chip_CASCADE';
@@ -58,7 +64,7 @@ function [params] = chirpProfile_TxBF_LRR()
 
     %% TX Beamforming antenna selection
     % We'll pick TX channels [12..4], same as in SMRR/USRR, just with different slope and timing for LRR.
-    params.Tx_Ant_Arr_BF = [12:-1:4];
+    params.Tx_Ant_Arr_BF = 12:-1:4;
     params.D_TX_BF = TI_Cascade_TX_position_azi(params.Tx_Ant_Arr_BF);
 
     % Enable all 4 devices and all 16 RX channels
@@ -66,7 +72,7 @@ function [params] = chirpProfile_TxBF_LRR()
     params.Rx_Elements_To_Capture = 1:16;
 
     %% Beam steering angles
-    params.anglesToSteer = [-30:2:30];
+    % params.anglesToSteer = [-30:2:30];
     params.NumAnglesToSweep = length(params.anglesToSteer);
 
     %% Chirp/Profile parameters for LRR
@@ -138,7 +144,6 @@ function [params] = chirpProfile_TxBF_LRR()
     chirpRampTime = params.Samples_per_Chirp / (params.Sampling_Rate_ksps / 1e3);
     chirpBandwidth = params.Slope_MHzperus(1) * chirpRampTime;  % in MHz
     rangeResolution = speedOfLight / 2 / (chirpBandwidth * 1e6);
-    params.rangeBinSize = ...
-        rangeResolution * params.Samples_per_Chirp / params.rangeFFTSize;
+    params.rangeBinSize = rangeResolution * params.Samples_per_Chirp / params.rangeFFTSize;
 
 end

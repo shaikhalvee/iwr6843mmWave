@@ -32,7 +32,7 @@
 %
 
 
-function [params] = chirpProfile_TxBF_USRR()
+function [params] = chirpProfile_TxBF_USRR(angles)
 
 	% TI cascade board antenna configurations
 
@@ -70,7 +70,11 @@ function [params] = chirpProfile_TxBF_USRR()
 
 
     %% Define angles to steer in TX beamforming mode (azimuth angles in degrees)
-    params.anglesToSteer = [-30:2:30];   % from -30° to +30°, in 2° steps
+    if isempty(angles)
+        params.anglesToSteer = -30:2:30;   % from -30° to +30°, in 2° steps
+    else
+        params.anglesToSteer = angles;  % Use provided angles if not empty
+    end
     params.NumAnglesToSweep = length(params.anglesToSteer);  % number of angles
 
 	%% Chirp/Profile parameters
