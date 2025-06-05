@@ -12,8 +12,10 @@ function [idealDeg, psTx, psLut] = beamSteerPhaseCalc(bAng, psActual, dTx, d)
     psAllowed = 0:LSB:360-LSB;                  % 64 values
 
     % Ideal continuous phase (deg) ------------------------------
-    sinTerm   = sind(bAng.' * 2*d);             % (nAng × 1)
-    idealDeg  = wrapTo360( sinTerm .* dTx );    % broadcasting → (nAng × nTx)
+    % Compute ideal phase in DEGREES for each (angle, tx)
+    % bAng: column vector [nAng x 1], dTx: row vector [1 x nTx]
+    arg = bAng(:) * 2 * pi * d / 180;  % [nAng x 1] * scalar → [nAng x 1]
+    idealDeg = wrapTo360( sin(arg) * dTx * 180 ); % broadcasting → (nAng × nTx)
 
     % Build LUT look‑up matrix ----------------------------------
     lut = [zeros(nTx,1) -psActual];             % prepend 0, negate sign
@@ -28,11 +30,29 @@ function [idealDeg, psTx, psLut] = beamSteerPhaseCalc(bAng, psActual, dTx, d)
 
         % Odd TX → choose min positive delta (≥0). Even TX → max negative.
         if mod(tx,2) % odd index
+            % posIdx = delta >= 0;
+            % [~,col] = min(delta .* posIdx + ~posIdx*Inf, [], 2);
             posIdx = delta >= 0;
-            [~,col] = min(delta .* posIdx + ~posIdx*Inf, [], 2);
-        else         % even index
+            deltaMasked = delta;
+            deltaMasked(~posIdx) = Inf;
+            [~,col] = min(deltaMasked, [], 2);
+            % No special handling needed, col=1 is fine if all Inf
+            % So, already matches TI logic: use index 1
+        else    % even index
+            % negIdx = delta <= 0;
+            % [~,col] = max(delta .* negIdx - ~negIdx*Inf, [], 2);
             negIdx = delta <= 0;
-            [~,col] = max(delta .* negIdx - ~negIdx*Inf, [], 2);
+            deltaMasked = delta;
+            deltaMasked(~negIdx) = -Inf;
+            [~,col] = max(deltaMasked, [], 2);
+            % If all -Inf (i.e., all negIdx false), col==1 (first index)
+            % But original code wants 'last' index
+            % So correct all-false case:
+            for ii = 1:nAng
+                if all(~negIdx(ii,:)) % all values -Inf
+                    col(ii) = size(lut,2); % last index
+                end
+            end
         end
         psTx(tx,:)  = psAllowed(col).';
         psLut(tx,:) = lut(tx,col).';
