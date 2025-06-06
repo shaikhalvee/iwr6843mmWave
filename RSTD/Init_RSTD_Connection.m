@@ -63,6 +63,8 @@ if Init_RSTD_Connection
         return;
     end
     disp('Connecting to RSTD client');
+    % remember to connect and run the device, then open mmWave studio
+    % before this step
     ErrStatus = RtttNetClientAPI.RtttNetClient.Connect('127.0.0.1',2777);
     if (ErrStatus ~= 0)
         disp('Unable to connect to Radarstudio');
