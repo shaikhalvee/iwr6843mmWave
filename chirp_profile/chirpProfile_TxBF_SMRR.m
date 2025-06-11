@@ -84,7 +84,8 @@ function [params] = chirpProfile_TxBF_SMRR(angles)
     %% Chirp/Profile parameters
     % The radar chirp is defined by slope, idle time, ramp end, sampling, etc.
     nchirp_loops = 64;        % how many times each chirp is repeated in a frame
-    Num_Frames = 4;           % how many frames we capture
+    Num_Frames = 50;           % how many frames we capture
+    
     params.Start_Freq_GHz = 77;    % Start frequency in GHz
     % The slope is set to '8.43 * 3' => 25.29 MHz/us total
     params.Slope_MHzperus = 8.43 * 3; 

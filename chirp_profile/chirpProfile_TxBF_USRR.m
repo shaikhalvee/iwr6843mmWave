@@ -82,7 +82,7 @@ function [params] = chirpProfile_TxBF_USRR(angles)
     % ramp time, sampling rate, and more. "nchirp_loops" is how many times each set of
     % chirps is repeated per frame. "Num_Frames" is how many frames to capture in total.
     nchirp_loops = 64;    % number of chirp loops (repetitions)
-    Num_Frames = 4;       % number of frames
+    Num_Frames = 70;       % number of frames
 
     params.Start_Freq_GHz = 77;                % Starting frequency for the chirp (GHz)
     params.Slope_MHzperus = 79;                % Frequency slope (MHz/us)
@@ -92,7 +92,7 @@ function [params] = chirpProfile_TxBF_USRR(angles)
     params.Ramp_End_Time_us = 40;              % Ramp end time (µs)
     params.Sampling_Rate_ksps = 8000;          % Sampling rate (ksps = kilo-samples/second)
     params.Samples_per_Chirp = 256;            % Number of ADC samples taken during each chirp
-    params.Rx_Gain_dB = 40;                    % RX gain in dB
+    params.Rx_Gain_dB = 30;                    % RX gain in dB
 
 	%% Frame config
 	% Store the loop and frame counts in the params structure
