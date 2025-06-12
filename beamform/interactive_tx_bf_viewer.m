@@ -5,12 +5,14 @@ function interactive_tx_bf_viewer(data_folder)
 %
 % data_folder: folder where rangeDopplerFFTmap.mat and *_params.mat are saved
 
+    clearvars -except data_folder;
+
     if nargin < 1
         data_folder = uigetdir(pwd, 'Select output folder containing the saved MAT files');
     end
 
     % Load data
-    d = dir(fullfile(data_folder, '*rangeDopplerFFTmap.mat'));
+    d = dir(fullfile(data_folder, 'rangeDopplerFFTmap.mat'));
     assert(~isempty(d), 'Cannot find rangeDopplerFFTmap.mat in the given folder');
     load(fullfile(data_folder, d(1).name), ...
         'all_to_plot', 'all_range_axis', 'all_doppler_axis', 'all_range_angle_stich');
@@ -65,10 +67,10 @@ function interactive_tx_bf_viewer(data_folder)
         range_angle_stich = all_range_angle_stich{frameIdx};
 
         % Defensive dimension handling
-        if ndims(to_plot) == 4
+        if ndims(to_plot) == 4  % to_plot will always be 4
             rd_map_per_angle = to_plot(:,:,:,angleIdx); % (R, D, Rx)
             rd_map_per_angle = mean(rd_map_per_angle, 3); % (R, D)
-        elseif ndims(to_plot) == 3
+        elseif ndims(to_plot) == 3 % for handling the old data
             if size(to_plot,3) >= angleIdx
                 rd_map_per_angle = to_plot(:,:,angleIdx);
             else
@@ -80,9 +82,11 @@ function interactive_tx_bf_viewer(data_folder)
             error('Unexpected to_plot dimensions.');
         end
 
+        logged_rd_map_per_angle = 20*log10(rd_map_per_angle) + 1;
+
         % RD map (dB)
         axes(hAx1); cla(hAx1);
-        imagesc(doppler_axis, range_axis, 20*log10(abs(rd_map_per_angle)));
+        imagesc(doppler_axis, range_axis, logged_rd_map_per_angle);
         axis xy;
         xlabel('Doppler (m/s)'); ylabel('Range (m)');
         title(sprintf('Range-Doppler Map, Angle = %d° (Frame %d)', ...
@@ -91,7 +95,7 @@ function interactive_tx_bf_viewer(data_folder)
 
         % Range Profile
         axes(hAx2); cla(hAx2);
-        plot(range_axis, 20*log10(mean(abs(rd_map_per_angle),2)), 'LineWidth', 1.5);
+        plot(range_axis, logged_rd_map_per_angle, 'LineWidth', 1.5);
         xlabel('Range (m)');
         ylabel('Power (dB)');
         title(sprintf('Range Profile, Frame %d', frameIdx));
@@ -99,7 +103,7 @@ function interactive_tx_bf_viewer(data_folder)
 
         % Doppler Profile
         axes(hAx3); cla(hAx3);
-        plot(doppler_axis, 20*log10(mean(abs(rd_map_per_angle),1)), 'LineWidth', 1.5);
+        plot(doppler_axis, logged_rd_map_per_angle, 'LineWidth', 1.5);
         xlabel('Velocity (m/s)');
         ylabel('Power (dB)');
         title(sprintf('Doppler Profile, Frame %d', frameIdx));
