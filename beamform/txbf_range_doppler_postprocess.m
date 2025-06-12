@@ -3,10 +3,9 @@
 %----------------------------------------------------------------------
 close all; clc; clearvars;
 
-PMM_MAP_SAVE = 1;
 
 % ----------------- USER CONFIG ---------------------------------------
-adc_data_folder = 'D:\Documents\Drone_Data\data\txbf_in_ng15_ps15_30db';
+adc_data_folder = 'D:\Documents\Drone_Data\data\txbf_in_drn_neg12_pos12_24db';
 [~, testRootFolder, ~] = fileparts(adc_data_folder);
 output_folder =  ['./output/' testRootFolder];
 oldParamsFile = [output_folder filesep testRootFolder '_params.mat'];
@@ -70,20 +69,21 @@ for i_file = 1:numel(fileIdx_unique)
         % If RD_map is 3D (range x doppler x RX), take mean across Rx
         % if it's 4D, (R, D, Rx, numAng)
         
-        if ndims(RD_map) == 3
-            % to_plot = abs(RD_map(:,:,1));     % visualize RX#1 only
-            to_plot = mean(abs(RD_map), 3); % or average over RXs
-        elseif ndims(RD_map) == 4
-            to_plot = mean(mean(abs(RD_map),3), 4); % or average over RXs and numAng
-        else
-            to_plot = abs(RD_map);
-        end
+        % if ndims(RD_map) == 3
+        %     % to_plot = abs(RD_map(:,:,1));     % visualize RX#1 only
+        %     to_plot = mean(abs(RD_map), 3); % or average over RXs
+        % elseif ndims(RD_map) == 4
+        %     to_plot = mean(mean(abs(RD_map),3), 4); % or average over RXs and numAng
+        % else
+        %     to_plot = abs(RD_map);
+        % end
+        to_plot = abs(RD_map);
         % saving plot data
         all_to_plot{end+1} = to_plot;
 
         % --------------- DISPLAY ---------------------------------
 
-        display_graph(params, to_plot, range_axis, doppler_axis, range_angle_stich, 30);
+        display_graph(params, to_plot, range_axis, doppler_axis, range_angle_stich, 10);
     end
 end
 
@@ -96,25 +96,57 @@ save(fullfile(output_folder, [testRootFolder '_params.mat']), 'params', '-v7.3')
 
 
 function display_graph(params, to_plot, range_axis, doppler_axis, range_angle_stich, startRangeIdx)
+
+    % to_plot is with (R,D,Rx,numAng)
+
+    maxRange = 100; %10 meters
+    maxRangeIndex = min(ceil(maxRange/params.rangeBinSize), params.rangeFFTSize);
+
     frameId = params.frameId;
     logged_plot = 20*log10(to_plot);
+
     figure(1);
     set(1, 'Name', ['Frame ID:' num2str(frameId)]);
+
+    for angleIdx = 1:params.NumAnglesToSweep
+        % ---------------- RD SPECTRUM PER ANGLE -----------------
+        rd_map_per_angle = to_plot(:,:,:,angleIdx); % picking the angle dimension
+        rd_map_per_angle = mean(rd_map_per_angle, 3); % taking mean across Rx
+        subplot(2,2,1);
+        imagesc(doppler_axis, range_axis(startRangeIdx:maxRangeIndex), 20*log10(rd_map_per_angle(startRangeIdx:maxRangeIndex,:)));
+        axis xy;
+        xlabel('Doppler (m/s)'); ylabel('Range (m)');
+        title(sprintf('Range-Doppler Map, Angle = %d° (Frame %d)', ...
+            params.anglesToSteer(angleIdx), frameId));
+        colorbar;
+        drawnow;
+
+        % --------------- RANGE PROFILE (new code) ----------------
+        subplot(2,2,2)
+        plot(range_axis(startRangeIdx:maxRangeIndex), 20*log10(rd_map_per_angle(startRangeIdx:maxRangeIndex,:)), 'LineWidth', 1.5);
+        xlabel('Range (m)');
+        ylabel('Power (dB)');
+        title(sprintf('Range Profile, Frame %d', frameId));
+        grid on;
+
+        % --------------- DOPPLER PROFILE (new code) ----------------
+        subplot(2,2,3)
+        plot(doppler_axis, 20*log10(rd_map_per_angle(startRangeIdx:maxRangeIndex,:)), 'LineWidth', 1.5);
+        xlabel('Velocity (m/s)');
+        ylabel('Power (dB)');
+        title(sprintf('Doppler Profile, Frame %d', frameId));
+        pause(0.1);
+    end
     
-    subplot(2,2,1);
-    imagesc(doppler_axis, range_axis(startRangeIdx:end), to_plot(startRangeIdx:end,:));
-    axis xy; xlabel('Doppler (m/s)'); ylabel('Range (m)');
-    title(sprintf('Range-Doppler map, Frame %d', frameId));
-    colorbar; drawnow;
+    
+    
+    % subplot(2,2,1);
+    % imagesc(doppler_axis, range_axis(startRangeIdx:maxRangeIndex), to_plot(startRangeIdx:maxRangeIndex,:));
+    % axis xy; xlabel('Doppler (m/s)'); ylabel('Range (m)');
+    % title(sprintf('Range-Doppler map, Frame %d', frameId));
+    % colorbar; drawnow;
 
-    % --------------- RANGE PROFILE (new code) ----------------
 
-    subplot(2,2,2)
-    plot(range_axis(startRangeIdx:end), logged_plot(startRangeIdx:end,:), 'LineWidth', 1.5);
-    xlabel('Range (m)');
-    ylabel('Power (dB)');
-    title(sprintf('Range Profile, Frame %d', frameId));
-    grid on;
 
     % --------------- 3D PLOT FOR ANGLE SWEEP ---------------------
     numAngles = params.NumAnglesToSweep;
@@ -128,16 +160,19 @@ function display_graph(params, to_plot, range_axis, doppler_axis, range_angle_st
         x_axis = R_mat.*cos_theta_mat;
         y_axis = R_mat.*sine_theta_mat;
 
-        range_angle_stich = (range_angle_stich(indices_1D,:).');
-        subplot(2,2,3);surf(y_axis, x_axis, abs(range_angle_stich).^0.2,'EdgeColor','none');
+        % range_angle_stich = (range_angle_stich(indices_1D,:).');
+        range_angle_stich_flipped = flipud(range_angle_stich(indices_1D,:).');
+        subplot(2,2,3);
+        surf(y_axis, x_axis, abs(range_angle_stich_flipped).^0.2,'EdgeColor','none');
         %xlim([-5 5])
         %ylim([0 10]);
         view(2);
         xlabel('meters')
         ylabel('meters')
         title('stich range/azimuth')
-    
-        subplot(2,2,4);surf(y_axis, x_axis, abs(range_angle_stich).^0.2,'EdgeColor','none');
+
+        subplot(2,2,4);
+        surf(y_axis, x_axis, abs(range_angle_stich_flipped).^0.2,'EdgeColor','none');
         %xlim([-5 5])
         %ylim([0 10]);
         view(0, 60);

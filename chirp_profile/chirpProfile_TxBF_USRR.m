@@ -81,8 +81,8 @@ function [params] = chirpProfile_TxBF_USRR(angles)
     % These set up how each chirp is generated, including frequency slope, idle time,
     % ramp time, sampling rate, and more. "nchirp_loops" is how many times each set of
     % chirps is repeated per frame. "Num_Frames" is how many frames to capture in total.
-    nchirp_loops = 64;    % number of chirp loops (repetitions)
-    Num_Frames = 70;       % number of frames
+    nchirp_loops = 128;    % number of chirp loops (repetitions)
+    Num_Frames = 90;       % number of frames
 
     params.Start_Freq_GHz = 77;                % Starting frequency for the chirp (GHz)
     params.Slope_MHzperus = 79;                % Frequency slope (MHz/us)
@@ -92,7 +92,7 @@ function [params] = chirpProfile_TxBF_USRR(angles)
     params.Ramp_End_Time_us = 40;              % Ramp end time (µs)
     params.Sampling_Rate_ksps = 8000;          % Sampling rate (ksps = kilo-samples/second)
     params.Samples_per_Chirp = 256;            % Number of ADC samples taken during each chirp
-    params.Rx_Gain_dB = 30;                    % RX gain in dB
+    params.Rx_Gain_dB = 24;                    % RX gain in dB
 
 	%% Frame config
 	% Store the loop and frame counts in the params structure
@@ -107,7 +107,6 @@ function [params] = chirpProfile_TxBF_USRR(angles)
     params.NumberOfSamplesPerChannel = params.Samples_per_Chirp * nchirp_loops ...
                                            * params.NumAnglesToSweep * params.Num_Frames;
     % above number is the number of ADC samples received per channel. this value is used in HSDC for data capture
-
 
 	%d = 0.5*actual wavelength/wavelength for antenna design
 	%``= 0.5 * actual center frequency/board antenna design frequency
