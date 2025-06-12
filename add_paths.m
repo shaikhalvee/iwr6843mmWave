@@ -1,6 +1,6 @@
 clear all;
 
-ignoreFolders = {'.git', '__MACOSX', '.svn', '.idea', '.vscode', 'private'};
+ignoreFolders = {'.git', '__MACOSX', '.svn', '.idea', '.vscode', 'private', 'output'};
 
 currentFile = mfilename('fullpath');
 projectRoot = fileparts(currentFile);
