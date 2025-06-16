@@ -31,6 +31,7 @@
 %
 %
 
+% max range = 15 meters.
 
 function [params] = chirpProfile_TxBF_USRR(angles)
 
@@ -38,6 +39,7 @@ function [params] = chirpProfile_TxBF_USRR(angles)
 
     % 'platform' variable might be used for reference checks
     platform = 'TI_4Chip_CASCADE';
+    config_profile = 'USRR';
 
     %% Fixed antenna ID and position values for TI 4-chip cascade board
     % These arrays define the azimuth and elevation positions of the 12 TX antennas
@@ -81,8 +83,8 @@ function [params] = chirpProfile_TxBF_USRR(angles)
     % These set up how each chirp is generated, including frequency slope, idle time,
     % ramp time, sampling rate, and more. "nchirp_loops" is how many times each set of
     % chirps is repeated per frame. "Num_Frames" is how many frames to capture in total.
-    nchirp_loops = 128;    % number of chirp loops (repetitions)
-    Num_Frames = 90;       % number of frames
+    nchirp_loops = 64;    % number of chirp loops (repetitions)
+    Num_Frames = 0;       % number of frames
 
     params.Start_Freq_GHz = 77;                % Starting frequency for the chirp (GHz)
     params.Slope_MHzperus = 79;                % Frequency slope (MHz/us)
@@ -92,7 +94,9 @@ function [params] = chirpProfile_TxBF_USRR(angles)
     params.Ramp_End_Time_us = 40;              % Ramp end time (µs)
     params.Sampling_Rate_ksps = 8000;          % Sampling rate (ksps = kilo-samples/second)
     params.Samples_per_Chirp = 256;            % Number of ADC samples taken during each chirp
-    params.Rx_Gain_dB = 24;                    % RX gain in dB
+    params.Rx_Gain_dB = 52;                    % RX gain in dB
+
+    % range resolution: 0.0593m
 
 	%% Frame config
 	% Store the loop and frame counts in the params structure
@@ -162,10 +166,17 @@ function [params] = chirpProfile_TxBF_USRR(angles)
 
 
     %% Derived parameters for reference or debugging
-    chirpRampTime = params.Samples_per_Chirp / (params.Sampling_Rate_ksps/1e3);
-    chirpBandwidth = params.Slope_MHzperus * chirpRampTime;  % in MHz
-    rangeResolution = speedOfLight / 2 / (chirpBandwidth * 1e6);
-    params.rangeBinSize = rangeResolution * params.Samples_per_Chirp / params.rangeFFTSize;
+    params.chirpRampTime = params.Samples_per_Chirp / (params.Sampling_Rate_ksps/1e3);
+    params.chirpBandwidth = params.Slope_MHzperus * params.chirpRampTime;  % in MHz
+    params.rangeResolution = speedOfLight / 2 / (params.chirpBandwidth * 1e6);
+    params.rangeBinSize = params.rangeResolution * params.Samples_per_Chirp / params.rangeFFTSize;
+    params.f_s = params.Sampling_Rate_ksps * 1e3; % ADC sampling rate (Hz)
+    params.maxRange = (params.f_c * speedOfLight) / (2 * params.Slope_MHzperus * 1e12); % meters
 
+    params.T_chirp = params.Chirp_Duration_us * 1e-6; % seconds
+    params.lambda = speedOfLight / (params.Start_Freq_GHz * 1e9); % wavelength (m)
+    params.velocityResolution = params.lambda / (2 * params.nchirp_loops * params.NumAnglesToSweep * params.T_chirp);
+    params.maxVelocity = params.lambda / (4 * params.T_chirp);
+    
 end
 

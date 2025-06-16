@@ -1,9 +1,5 @@
 function interactive_tx_bf_viewer(data_folder)
 % INTERACTIVE_TX_BF_VIEWER: Interactive viewer for TX beamforming post-processing results.
-% Usage:
-%   interactive_tx_bf_viewer('./output/txbf_in_drn_neg12_pos12_24db');
-%
-% data_folder: folder where rangeDopplerFFTmap.mat and *_params.mat are saved
 
     clearvars -except data_folder;
 
@@ -21,11 +17,9 @@ function interactive_tx_bf_viewer(data_folder)
     assert(~isempty(d2), 'Cannot find *_params.mat in the given folder');
     load(fullfile(data_folder, d2(1).name), 'params');
 
-    nFrames = numel(all_to_plot); % params.Num_Frames
+    nFrames = numel(all_to_plot);
     nAngles = params.NumAnglesToSweep;
     anglesToSteer = params.anglesToSteer;
-
-    % Precompute: check dimensions and fix if needed
     if nAngles == 1 && size(all_to_plot{1}, 4) == 1
         nAngles = 1;
     end
@@ -45,32 +39,42 @@ function interactive_tx_bf_viewer(data_folder)
         'String', 'Frame: 1', 'HorizontalAlignment', 'left');
     hAngleLabel = uicontrol('Style', 'text', 'Position', [960 10 80 20], ...
         'String', sprintf('Angle: %d°', anglesToSteer(1)), 'HorizontalAlignment', 'left');
-
-    % Axes handles for 4 plots
+    
+    % Checkbox for each plot (bottom-left of each subplot)
     hAx1 = subplot(2,2,1); % Range-Doppler Map
+    hCB1 = uicontrol('Style', 'checkbox', 'String', 'Log (dB)', ...
+        'Position', [160 370 80 20], 'Value', 1, 'Parent', hFig); % Place it near subplot(2,2,1)
     hAx2 = subplot(2,2,2); % Range Profile
+    hCB2 = uicontrol('Style', 'checkbox', 'String', 'Log (dB)', ...
+        'Position', [690 370 80 20], 'Value', 1, 'Parent', hFig); % Place it near subplot(2,2,2)
     hAx3 = subplot(2,2,3); % Doppler Profile
+    hCB3 = uicontrol('Style', 'checkbox', 'String', 'Log (dB)', ...
+        'Position', [160 150 80 20], 'Value', 1, 'Parent', hFig); % Place it near subplot(2,2,3)
     hAx4 = subplot(2,2,4); % Range-Azimuth 3D
 
     % Callback function for updating plots
     function updatePlots(~,~)
         frameIdx = round(get(hFrame, 'Value'));
         angleIdx = round(get(hAngle, 'Value'));
+        isLog1 = get(hCB1, 'Value'); % RD Map
+        isLog2 = get(hCB2, 'Value'); % Range Profile
+        isLog3 = get(hCB3, 'Value'); % Doppler Profile
 
         % Update labels
         set(hFrameLabel, 'String', sprintf('Frame: %d', frameIdx));
         set(hAngleLabel, 'String', sprintf('Angle: %d°', anglesToSteer(angleIdx)));
 
         to_plot = all_to_plot{frameIdx};
+        to_plot = abs(to_plot);
         range_axis = all_range_axis{frameIdx};
         doppler_axis = all_doppler_axis{frameIdx};
         range_angle_stich = all_range_angle_stich{frameIdx};
 
         % Defensive dimension handling
-        if ndims(to_plot) == 4  % to_plot will always be 4
+        if ndims(to_plot) == 4
             rd_map_per_angle = to_plot(:,:,:,angleIdx); % (R, D, Rx)
             rd_map_per_angle = mean(rd_map_per_angle, 3); % (R, D)
-        elseif ndims(to_plot) == 3 % for handling the old data
+        elseif ndims(to_plot) == 3
             if size(to_plot,3) >= angleIdx
                 rd_map_per_angle = to_plot(:,:,angleIdx);
             else
@@ -82,31 +86,48 @@ function interactive_tx_bf_viewer(data_folder)
             error('Unexpected to_plot dimensions.');
         end
 
-        logged_rd_map_per_angle = 20*log10(rd_map_per_angle) + 1;
-
-        % RD map (dB)
+        % Range-Doppler Map (axes hAx1)
         axes(hAx1); cla(hAx1);
-        imagesc(doppler_axis, range_axis, logged_rd_map_per_angle);
+        if isLog1
+            rd_disp = 20*log10(rd_map_per_angle + eps);
+            imagesc(doppler_axis, range_axis, rd_disp);
+            title('Range-Doppler Map (dB)');
+            ylabel('Range (m)'); xlabel('Doppler (m/s)');
+            colorbar;
+        else
+            imagesc(doppler_axis, range_axis, rd_map_per_angle);
+            title('Range-Doppler Map (linear)');
+            ylabel('Range (m)'); xlabel('Doppler (m/s)');
+            colorbar;
+        end
         axis xy;
-        xlabel('Doppler (m/s)'); ylabel('Range (m)');
-        title(sprintf('Range-Doppler Map, Angle = %d° (Frame %d)', ...
-            anglesToSteer(angleIdx), frameIdx));
-        colorbar;
 
-        % Range Profile
+        % Range Profile (axes hAx2) — plot each Doppler bin as a line
         axes(hAx2); cla(hAx2);
-        plot(range_axis, logged_rd_map_per_angle, 'LineWidth', 1.5);
+        if isLog2
+            plot(range_axis, 20*log10(rd_map_per_angle + eps), 'LineWidth', 1.0);
+            title('Range Profile (dB)');
+            ylabel('Power (dB)');
+        else
+            plot(range_axis, rd_map_per_angle, 'LineWidth', 1.0);
+            title('Range Profile (linear)');
+            ylabel('Power (linear)');
+        end
         xlabel('Range (m)');
-        ylabel('Power (dB)');
-        title(sprintf('Range Profile, Frame %d', frameIdx));
         grid on;
 
-        % Doppler Profile
+        % Doppler Profile (axes hAx3) — plot each Range bin as a line
         axes(hAx3); cla(hAx3);
-        plot(doppler_axis, logged_rd_map_per_angle, 'LineWidth', 1.5);
+        if isLog3
+            plot(doppler_axis, 20*log10(rd_map_per_angle' + eps), 'LineWidth', 1.0);
+            title('Doppler Profile (dB)');
+            ylabel('Power (dB)');
+        else
+            plot(doppler_axis, rd_map_per_angle', 'LineWidth', 1.0);
+            title('Doppler Profile (linear)');
+            ylabel('Power (linear)');
+        end
         xlabel('Velocity (m/s)');
-        ylabel('Power (dB)');
-        title(sprintf('Doppler Profile, Frame %d', frameIdx));
         grid on;
 
         % Range-Azimuth (stich map) with 3D perspective (view(0,60))
@@ -121,15 +142,13 @@ function interactive_tx_bf_viewer(data_folder)
         x_axis = R_mat.*cos_theta_mat;
         y_axis = R_mat.*sine_theta_mat;
 
-        % range_angle_stich: (range, angle) or (range, angle, ...)
         if ~ismatrix(range_angle_stich)
             range_angle_stich_2d = squeeze(range_angle_stich(:,:,1));
         else
             range_angle_stich_2d = range_angle_stich;
         end
-        % Flip to match original display
-        range_angle_stich_flipped = flipud(range_angle_stich_2d(indices_1D,:).');
-        surf(y_axis, x_axis, abs(range_angle_stich_flipped).^0.2,'EdgeColor','none');
+        range_angle_stich_display = range_angle_stich_2d(indices_1D,:).';
+        surf(y_axis, x_axis, abs(range_angle_stich_display).^0.2,'EdgeColor','none');
         view(0, 60);
         xlabel('meters')
         ylabel('meters')
@@ -141,6 +160,9 @@ function interactive_tx_bf_viewer(data_folder)
     % Set callbacks
     set(hFrame, 'Callback', @updatePlots);
     set(hAngle, 'Callback', @updatePlots);
+    set(hCB1, 'Callback', @updatePlots);
+    set(hCB2, 'Callback', @updatePlots);
+    set(hCB3, 'Callback', @updatePlots);
 
     % Initial plot
     updatePlots();

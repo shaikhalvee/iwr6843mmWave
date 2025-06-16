@@ -5,7 +5,7 @@ close all; clc; clearvars;
 
 
 % ----------------- USER CONFIG ---------------------------------------
-adc_data_folder = 'D:\Documents\Drone_Data\data\txbf_in_drn_neg12_pos12_24db';
+adc_data_folder = 'D:\Documents\Drone_Data\data\txbf_cor_drn_9_1_9_52db';
 [~, testRootFolder, ~] = fileparts(adc_data_folder);
 output_folder =  ['./output/' testRootFolder];
 oldParamsFile = [output_folder filesep testRootFolder '_params.mat'];
@@ -160,19 +160,19 @@ function display_graph(params, to_plot, range_axis, doppler_axis, range_angle_st
         x_axis = R_mat.*cos_theta_mat;
         y_axis = R_mat.*sine_theta_mat;
 
-        % range_angle_stich = (range_angle_stich(indices_1D,:).');
-        range_angle_stich_flipped = flipud(range_angle_stich(indices_1D,:).');
-        subplot(2,2,3);
-        surf(y_axis, x_axis, abs(range_angle_stich_flipped).^0.2,'EdgeColor','none');
-        %xlim([-5 5])
-        %ylim([0 10]);
-        view(2);
-        xlabel('meters')
-        ylabel('meters')
-        title('stich range/azimuth')
+        range_angle_stich = (range_angle_stich(indices_1D,:).');
+        % range_angle_stich_flipped = flipud(range_angle_stich(indices_1D,:).');
+        % subplot(2,2,3);
+        % surf(y_axis, x_axis, abs(range_angle_stich).^0.2,'EdgeColor','none');
+        % %xlim([-5 5])
+        % %ylim([0 10]);
+        % view(2);
+        % xlabel('meters')
+        % ylabel('meters')
+        % title('stich range/azimuth')
 
         subplot(2,2,4);
-        surf(y_axis, x_axis, abs(range_angle_stich_flipped).^0.2,'EdgeColor','none');
+        surf(y_axis, x_axis, abs(range_angle_stich).^0.2,'EdgeColor','none');
         %xlim([-5 5])
         %ylim([0 10]);
         view(0, 60);

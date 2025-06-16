@@ -50,6 +50,7 @@ function [params] = chirpProfile_TxBF_SMRR(angles)
 
     % TI 4-Chip Cascade board reference
     platform = 'TI_4Chip_CASCADE';
+    config_profile = 'SMRR';
 
     %% Fixed TI cascade board definitions
     % The arrays below specify the azimuth & elevation positions (in half-lambda units)
@@ -83,7 +84,7 @@ function [params] = chirpProfile_TxBF_SMRR(angles)
 
     %% Chirp/Profile parameters
     % The radar chirp is defined by slope, idle time, ramp end, sampling, etc.
-    nchirp_loops = 64;        % how many times each chirp is repeated in a frame
+    nchirp_loops = 128;        % how many times each chirp is repeated in a frame
     Num_Frames = 50;           % how many frames we capture
     
     params.Start_Freq_GHz = 77;    % Start frequency in GHz
@@ -95,7 +96,9 @@ function [params] = chirpProfile_TxBF_SMRR(angles)
     params.Ramp_End_Time_us = 35;  
     params.Sampling_Rate_ksps = 9000;  
     params.Samples_per_Chirp = 256;    
-    params.Rx_Gain_dB = 30;          % Received gain in dB
+    params.Rx_Gain_dB = 25;          % Received gain in dB
+
+    % range resolution: 0.2 m
 
     % Frame config parameters
     params.nchirp_loops = nchirp_loops;
@@ -163,7 +166,14 @@ function [params] = chirpProfile_TxBF_SMRR(angles)
     % The slope(1) is used if it's an array, but here it's just a single value
     chirpBandwidth = params.Slope_MHzperus(1) * chirpRampTime;  
     rangeResolution = speedOfLight / 2 / (chirpBandwidth * 1e6);
-    params.rangeBinSize = ...
-        rangeResolution * params.Samples_per_Chirp / params.rangeFFTSize;
+    params.rangeBinSize = rangeResolution * params.Samples_per_Chirp / params.rangeFFTSize;
+    
+    params.f_s = params.Sampling_Rate_ksps * 1e3; % ADC sampling rate (Hz)
+    params.maxRange = (params.f_c * speedOfLight) / (2 * params.Slope_MHzperus * 1e12); % meters
 
+    params.T_chirp = params.Chirp_Duration_us * 1e-6; % seconds
+    params.lambda = speedOfLight / (params.Start_Freq_GHz * 1e9); % wavelength (m)
+    params.velocityResolution = params.lambda / (2 * params.nchirp_loops * params.NumAnglesToSweep * params.T_chirp);
+    params.maxVelocity = params.lambda / (4 * params.T_chirp);
+    
 end

@@ -55,6 +55,7 @@ function [params] = chirpProfile_TxBF_LRR(angles)
 
     % TI 4-Chip Cascade board reference
     platform = 'TI_4Chip_CASCADE';
+    config_profile = 'LRR';
 
     %% Fixed TI cascade board definitions
     TI_Cascade_TX_position_azi = [11 10 9 32 28 24 20 16 12 8 4 0];
@@ -89,6 +90,8 @@ function [params] = chirpProfile_TxBF_LRR(angles)
     params.Sampling_Rate_ksps = 15000; % 15 Msps
     params.Samples_per_Chirp = 256;    
     params.Rx_Gain_dB = 30;
+
+    % range resolution: 1.255 m
     
     % Frame info
     params.nchirp_loops = nchirp_loops;
@@ -145,5 +148,12 @@ function [params] = chirpProfile_TxBF_LRR(angles)
     chirpBandwidth = params.Slope_MHzperus(1) * chirpRampTime;  % in MHz
     rangeResolution = speedOfLight / 2 / (chirpBandwidth * 1e6);
     params.rangeBinSize = rangeResolution * params.Samples_per_Chirp / params.rangeFFTSize;
+    params.f_s = params.Sampling_Rate_ksps * 1e3; % ADC sampling rate (Hz)
+    params.maxRange = (params.f_c * speedOfLight) / (2 * params.Slope_MHzperus * 1e12); % meters
 
+    params.T_chirp = params.Chirp_Duration_us * 1e-6; % seconds
+    params.lambda = speedOfLight / (params.Start_Freq_GHz * 1e9); % wavelength (m)
+    params.velocityResolution = params.lambda / (2 * params.nchirp_loops * params.NumAnglesToSweep * params.T_chirp);
+    params.maxVelocity = params.lambda / (4 * params.T_chirp);
+    
 end
