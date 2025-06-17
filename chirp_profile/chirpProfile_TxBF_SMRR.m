@@ -89,7 +89,7 @@ function [params] = chirpProfile_TxBF_SMRR(angles)
     
     params.Start_Freq_GHz = 77;    % Start frequency in GHz
     % The slope is set to '8.43 * 3' => 25.29 MHz/us total
-    params.Slope_MHzperus = 8.43 * 3; 
+    params.Slope_MHzperus = 8.43 * 3;
     params.Idle_Time_us = 5;       
     params.Tx_Start_Time_us = 0;   
     params.Adc_Start_Time_us = 6;  

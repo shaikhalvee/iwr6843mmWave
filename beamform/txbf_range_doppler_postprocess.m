@@ -9,6 +9,7 @@ adc_data_folder = 'D:\Documents\Drone_Data\data\txbf_prk_drn_9_1_9';
 [~, testRootFolder, ~] = fileparts(adc_data_folder);
 output_folder =  ['./output/' testRootFolder];
 oldParamsFile = [output_folder filesep testRootFolder '_params.mat'];
+frame_folder = [output_folder filesep 'rangeDopplerFFTmap/'];
 calib_file      = './input/calibrConfig/calibrateResults_dummy.mat';
 
 % ----------------- LOAD PARAMS FROM JSON & CALIB ---------------------
@@ -43,17 +44,12 @@ BF_MIMO_ref = calibResult.RxMismatch;
 [fileIdx_unique] = getUniqueFileIdx(adc_data_folder);
 
 % all_RD_map = {};        % cell array for all frames (if #frames can differ per file)
-% all_range_axis = {};
-% all_doppler_axis = {};
-% all_range_angle_stich = {};
+all_range_axis = {};
+all_doppler_axis = {};
+all_range_angle_stich = {};
 % all_to_plot = {};
 
 mfile = matfile(fullfile(output_folder, "rangeDopplerFFTmap.mat"), "Writable", true);
-mfile.all_range_axis;
-mfile.all_doppler_axis;
-mfile.all_range_angle_stich;
-mfile.all_to_plot;
-
 
 frameCounter = 1;
 
@@ -61,7 +57,7 @@ for i_file = 1:numel(fileIdx_unique)
     [fileNameStruct] = getBinFileNames_withIdx(adc_data_folder, fileIdx_unique{i_file});
     [numValidFrames, ~] = getValidNumFrames(fullfile(adc_data_folder, fileNameStruct.masterIdxFile));
 
-    for frameId = 2:numValidFrames
+    for frameId = 1:numValidFrames
         params.frameId = frameId;
 
         % ----------------- LOAD RAW ADC DATA (ALL RX, 1 ANGLE) ----------
@@ -74,27 +70,18 @@ for i_file = 1:numel(fileIdx_unique)
 
         % Store for saving later
         % all_RD_map{end+1} = RD_map;
-        % all_range_axis{end+1} = range_axis;
-        % all_doppler_axis{end+1} = doppler_axis;
-        % all_range_angle_stich{end+1} = range_angle_stich;
+        all_range_axis{end+1} = range_axis;
+        all_doppler_axis{end+1} = doppler_axis;
+        all_range_angle_stich{end+1} = range_angle_stich;
         % to_plot = RD_map;
         % saving plot data
         % all_to_plot{end+1} = to_plot;
         fprintf('[INFO] processing frame no: %d\n', frameCounter);
 
-        if frameCounter == 1
-            mfile.all_range_axis = single(range_axis(:));
-            mfile.all_doppler_axis = single(doppler_axis(:));
-            mfile.all_range_angle_stich = complex(range_angle_stich(:));
-            mfile.all_to_plot = complex(RD_map(:));
-      
-        else 
-            mfile.all_range_axis(:, frameCounter) = single(range_axis(:));
-            mfile.all_doppler_axis(:, frameCounter) = single(doppler_axis(:));
-            mfile.all_range_angle_stich(:, frameCounter) = complex(range_angle_stich(:));
-            to_plot = RD_map;
-            mfile.all_to_plot(:, frameCounter) = complex(to_plot(:));
+        if ~isfolder(frame_folder)
+            mkdir(frame_folder);
         end
+        save(fullfile(frame_folder, sprintf('frame_%05d.mat', frameCounter)), 'RD_map', '-v7.3');
         frameCounter = frameCounter + 1;
 
         % --------------- DISPLAY ---------------------------------
@@ -106,8 +93,7 @@ end
 params.total_frames = frameCounter-1;
 
 
-% save(fullfile(output_folder, "rangeDopplerFFTmap.mat"), "all_to_plot", ...
-%     "all_range_axis", "all_doppler_axis", "all_range_angle_stich", '-v7.3');
+save(fullfile(output_folder, "config.mat"), "all_range_axis", "all_doppler_axis", "all_range_angle_stich", '-v7.3');
 
 save(fullfile(output_folder, [testRootFolder '_params.mat']), 'params', '-v7.3');
 

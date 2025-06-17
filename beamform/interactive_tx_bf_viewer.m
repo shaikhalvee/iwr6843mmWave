@@ -1,12 +1,13 @@
-function interactive_tx_bf_viewer(data_folder)
+function interactive_tx_bf_viewer()
 % INTERACTIVE_TX_BF_VIEWER: Interactive viewer for TX beamforming post-processing results.
 
-    clearvars -except data_folder;
+    % clearvars -except data_folder;
+    % 
+    % if nargin < 1
+    %     data_folder = uigetdir(pwd, 'Select output folder containing the saved MAT files');
+    % end
 
-    if nargin < 1
-        data_folder = uigetdir(pwd, 'Select output folder containing the saved MAT files');
-    end
-
+    data_folder = './output/txbf_prk_cor_30db';
     % Load data
     d = dir(fullfile(data_folder, 'rangeDopplerFFTmap.mat'));
     assert(~isempty(d), 'Cannot find rangeDopplerFFTmap.mat in the given folder');

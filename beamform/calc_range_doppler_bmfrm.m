@@ -1,9 +1,12 @@
-function [RD_map, range_axis, doppler_axis, range_angle_stich] = calc_range_doppler_bmfrm(adcRadarData_txbf, paramsConfig, BF_MIMO_ref)
+function [RD_map, range_axis, doppler_axis, range_angle_stich, paramsConfig] = calc_range_doppler_bmfrm(adcRadarData_txbf, paramsConfig, BF_MIMO_ref)
     
     % dim: adc_cube [numRangeBin, numDopplerBin, numRx, numSweepAng]
 
+    % clutter & noise handle
+    dcOffsetRemoval = true;
+    dopplerClutterRemoval = true;
+
     % var initialize
-    
     paramsConfig.rangeFFTSize = 2^ceil(log2(paramsConfig.Samples_per_Chirp));
     paramsConfig.dopplerFFTSize = 2^ceil(log2(paramsConfig.nchirp_loops));
     
@@ -36,9 +39,21 @@ function [RD_map, range_axis, doppler_axis, range_angle_stich] = calc_range_dopp
     range_win   = hann_local(num_samples);
     doppler_win = hann_local(num_chirps);
 
+    % DC Offset removal
+    if dcOffsetRemoval
+        % Subtract mean across the first dimension (samples)
+        adcRadarData_txbf = adcRadarData_txbf - mean(adcRadarData_txbf, 1);
+    end
+
     % Range FFT (dim 1)
     radar_data_win = adcRadarData_txbf .* reshape(range_win,[],1,1,1);
-    range_fft    = fft(radar_data_win, paramsConfig.rangeFFTSize, 1);
+    range_fft    = fft(radar_data_win, paramsConfig.rangeFFTSize, 1);  % [range, chirps, Rx, angles]
+
+    % Doppler clutter removal
+    if dopplerClutterRemoval
+        % Remove mean across slow time (chirps) for each [range, Rx, angle]
+        range_fft = range_fft - mean(range_fft, 2);
+    end
 
     % Doppler FFT (dim 2)
     range_fft_win = range_fft .* reshape(doppler_win,1,[],1,1);
