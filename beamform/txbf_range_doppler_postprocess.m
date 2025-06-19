@@ -29,6 +29,10 @@ numChirp = params.nchirp_loops;
 numRx = params.numRX;
 numAngle = params.NumAnglesToSweep;
 
+% clutter & noise handle
+dcOffsetRemoval = true;
+dopplerClutterRemoval = false;
+
 
 % paramsConfig = struct;
 % I shouldn't repopulate here
@@ -47,9 +51,7 @@ BF_MIMO_ref = calibResult.RxMismatch;
 all_range_axis = {};
 all_doppler_axis = {};
 all_range_angle_stich = {};
-% all_to_plot = {};
-
-mfile = matfile(fullfile(output_folder, "rangeDopplerFFTmap.mat"), "Writable", true);
+all_to_plot = {};
 
 frameCounter = 1;
 
@@ -66,7 +68,8 @@ for i_file = 1:numel(fileIdx_unique)
 
         % --------------- RANGE-DOPPLER PROCESSING & PLOT ---------------
         [RD_map, range_axis, doppler_axis, ...
-            range_angle_stich, params] = calc_range_doppler_bmfrm(radar_data_txbf, params, BF_MIMO_ref);
+            range_angle_stich, params] = calc_range_doppler_bmfrm( ...
+                    radar_data_txbf, params, BF_MIMO_ref, dcOffsetRemoval, dopplerClutterRemoval);
 
         % Store for saving later
         % all_RD_map{end+1} = RD_map;

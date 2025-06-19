@@ -1,10 +1,13 @@
-function [RD_map, range_axis, doppler_axis, range_angle_stich, paramsConfig] = calc_range_doppler_bmfrm(adcRadarData_txbf, paramsConfig, BF_MIMO_ref)
+function [RD_map, range_axis, ...
+    doppler_axis, range_angle_stich, ...
+    paramsConfig] = calc_range_doppler_bmfrm(adcRadarData_txbf, ...
+        paramsConfig, BF_MIMO_ref, dcOffsetRemoval, dopplerClutterRemoval)
     
     % dim: adc_cube [numRangeBin, numDopplerBin, numRx, numSweepAng]
 
     % clutter & noise handle
-    dcOffsetRemoval = true;
-    dopplerClutterRemoval = true;
+    % dcOffsetRemoval = true;
+    % dopplerClutterRemoval = true;
 
     % var initialize
     paramsConfig.rangeFFTSize = 2^ceil(log2(paramsConfig.Samples_per_Chirp));
@@ -42,21 +45,28 @@ function [RD_map, range_axis, doppler_axis, range_angle_stich, paramsConfig] = c
     % DC Offset removal
     if dcOffsetRemoval
         % Subtract mean across the first dimension (samples)
-        adcRadarData_txbf = adcRadarData_txbf - mean(adcRadarData_txbf, 1);
+        % adcRadarData_txbf = adcRadarData_txbf - mean(adcRadarData_txbf, 1);
+        adcRadarData_txbf = bsxfun(@minus, adcRadarData_txbf, mean(adcRadarData_txbf,1));
     end
 
-    % Range FFT (dim 1)
+    % apply range-domain windowing
     radar_data_win = adcRadarData_txbf .* reshape(range_win,[],1,1,1);
+    
+    % Range FFT (dim 1)
     range_fft    = fft(radar_data_win, paramsConfig.rangeFFTSize, 1);  % [range, chirps, Rx, angles]
+
+
+    % Doppler window coefficient
+    range_fft_win = range_fft .* reshape(doppler_win,1,[],1,1);
 
     % Doppler clutter removal
     if dopplerClutterRemoval
         % Remove mean across slow time (chirps) for each [range, Rx, angle]
-        range_fft = range_fft - mean(range_fft, 2);
+        % range_fft_win = range_fft_win - mean(range_fft_win, 2);
+        range_fft_win = bsxfun(@minus, range_fft_win, mean(range_fft_win,2));
     end
-
+    
     % Doppler FFT (dim 2)
-    range_fft_win = range_fft .* reshape(doppler_win,1,[],1,1);
     doppler_fft   = fftshift(fft(range_fft_win, numDopplerBin, 2), 2);
 
     % RX calibration
@@ -85,6 +95,7 @@ function [RD_map, range_axis, doppler_axis, range_angle_stich, paramsConfig] = c
     paramsConfig.v_max = v_max;
     paramsConfig.c = c;
     paramsConfig.samplingRate = fs;
+    paramsConfig.slope = slope;
 
     % perform beamsteering towards the angle TX steering angles
     rangeDopplerFFT_zeroDopp = squeeze(doppler_fft(:, paramsConfig.dopplerFFTSize/2+1,:,:));
