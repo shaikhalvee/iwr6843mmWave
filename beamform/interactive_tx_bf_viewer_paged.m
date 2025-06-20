@@ -51,11 +51,14 @@ function interactive_tx_bf_viewer_paged()
         'String', sprintf('Angle: %d°', anglesToSteer(1)), 'HorizontalAlignment', 'left');
 
     hAx1 = subplot(2,2,1);
-    hCB1 = uicontrol('Style', 'checkbox', 'String', 'Log (dB)', 'Position', [160 370 80 20], 'Value', 1, 'Parent', hFig);
+    hCB1 = uicontrol('Style', 'checkbox', 'String', 'Log (dB)', ...
+        'Units', 'normalized', 'Position', [0.11 0.51 0.05 0.03], 'Value', 1, 'Parent', hFig);
     hAx2 = subplot(2,2,2);
-    hCB2 = uicontrol('Style', 'checkbox', 'String', 'Log (dB)', 'Position', [690 370 80 20], 'Value', 1, 'Parent', hFig);
+    hCB2 = uicontrol('Style', 'checkbox', 'String', 'Log (dB)', ...
+        'Units', 'normalized', 'Position', [0.11 0.04 0.05 0.03], 'Value', 1, 'Parent', hFig);
     hAx3 = subplot(2,2,3);
-    hCB3 = uicontrol('Style', 'checkbox', 'String', 'Log (dB)', 'Position', [160 150 80 20], 'Value', 1, 'Parent', hFig);
+    hCB3 = uicontrol('Style', 'checkbox', 'String', 'Log (dB)', ...
+        'Units', 'normalized', 'Position', [0.55 0.51 0.05 0.03], 'Value', 1, 'Parent', hFig);
     hAx4 = subplot(2,2,4);
 
     % Load first batch
@@ -186,13 +189,4 @@ function interactive_tx_bf_viewer_paged()
     % Initial plot
     updatePlots();
 
-end
-
-function batch_data = load_batch(idx_start, idx_end, all_files)
-    n = idx_end - idx_start + 1;
-    batch_data = cell(1,n);
-    for i = 1:n
-        frame_idx = idx_start + i - 1;
-        batch_data{i} = load(fullfile(all_files(frame_idx).folder, all_files(frame_idx).name));
-    end
 end
