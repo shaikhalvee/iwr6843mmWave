@@ -45,8 +45,8 @@ function [RD_map, range_axis, ...
     % DC Offset removal
     if dcOffsetRemoval
         % Subtract mean across the first dimension (samples)
-        % adcRadarData_txbf = adcRadarData_txbf - mean(adcRadarData_txbf, 1);
-        adcRadarData_txbf = bsxfun(@minus, adcRadarData_txbf, mean(adcRadarData_txbf,1));
+        adcRadarData_txbf = adcRadarData_txbf - mean(adcRadarData_txbf, 1);
+        % adcRadarData_txbf = bsxfun(@minus, adcRadarData_txbf, mean(adcRadarData_txbf,1));
     end
 
     % apply range-domain windowing
@@ -62,8 +62,8 @@ function [RD_map, range_axis, ...
     % Doppler clutter removal
     if dopplerClutterRemoval
         % Remove mean across slow time (chirps) for each [range, Rx, angle]
-        % range_fft_win = range_fft_win - mean(range_fft_win, 2);
-        range_fft_win = bsxfun(@minus, range_fft_win, mean(range_fft_win,2));
+        range_fft_win = range_fft_win - mean(range_fft_win, 2);
+        % range_fft_win = bsxfun(@minus, range_fft_win, mean(range_fft_win,2));
     end
     
     % Doppler FFT (dim 2)
@@ -83,6 +83,7 @@ function [RD_map, range_axis, ...
     c = physconst('LightSpeed');
     fs = paramsConfig.Sampling_Rate_ksps * 1e3;
     slope = paramsConfig.Slope_MHzperus * 1e12;
+    paramsConfig.bandwidth = slope * paramsConfig.rangeFFTSize / fs;
     range_axis = (0:paramsConfig.rangeFFTSize-1) * c * fs / (2 * slope * paramsConfig.rangeFFTSize);
     % PRF = 1e6 / (paramsConfig.Idle_Time_us + paramsConfig.Ramp_End_Time_us);
     PRT = (paramsConfig.Idle_Time_us + paramsConfig.Ramp_End_Time_us) * 1e-6;

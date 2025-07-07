@@ -1,8 +1,8 @@
 function interactive_tx_bf_viewer_paged()
 % INTERACTIVE_TX_BF_VIEWER_PAGED: Paged viewer for huge per-frame TXBF results.
 
-    frames_per_batch = 20;
-    data_folder = './output/txbf_prk_drn_9_1_9/';
+    frames_per_batch = 60;
+    data_folder = './output/txbf_prk_62625/';
     frame_folder = [data_folder 'rangeDopplerFFTmap_11/'];
     config_folder = data_folder;
 
@@ -13,7 +13,7 @@ function interactive_tx_bf_viewer_paged()
     % Load metadata arrays (axes, stich, params)
     config_data = load(fullfile(config_folder, 'config.mat'));
     all_range_axis = config_data.all_range_axis;       
-    all_doppler_axis = config_data.all_doppler_axis;   
+    all_doppler_axis = config_data.all_doppler_axis;     
     all_range_angle_stich = config_data.all_range_angle_stich;  
 
     params_file = dir(fullfile(config_folder, '*_params.mat'));
@@ -55,10 +55,10 @@ function interactive_tx_bf_viewer_paged()
         'Units', 'normalized', 'Position', [0.11 0.51 0.05 0.03], 'Value', 1, 'Parent', hFig);
     hAx2 = subplot(2,2,2);
     hCB2 = uicontrol('Style', 'checkbox', 'String', 'Log (dB)', ...
-        'Units', 'normalized', 'Position', [0.11 0.04 0.05 0.03], 'Value', 1, 'Parent', hFig);
+        'Units', 'normalized', 'Position', [0.55 0.51 0.05 0.03], 'Value', 1, 'Parent', hFig);
     hAx3 = subplot(2,2,3);
     hCB3 = uicontrol('Style', 'checkbox', 'String', 'Log (dB)', ...
-        'Units', 'normalized', 'Position', [0.55 0.51 0.05 0.03], 'Value', 1, 'Parent', hFig);
+        'Units', 'normalized', 'Position', [0.11 0.04 0.05 0.03], 'Value', 1, 'Parent', hFig);
     hAx4 = subplot(2,2,4);
 
     % Load first batch
@@ -106,7 +106,7 @@ function interactive_tx_bf_viewer_paged()
         % Range Profile
         axes(hAx2); cla(hAx2);
         if isLog2
-            plot(range_axis, 20*log10(mean(to_plot,2)+eps), 'LineWidth', 1.0);
+            plot(range_axis, 20*log10(max(to_plot,2)+eps), 'LineWidth', 1.0);
             title('Range Profile (dB)');
             ylabel('Power (dB)');
         else
@@ -119,7 +119,7 @@ function interactive_tx_bf_viewer_paged()
         % Doppler Profile
         axes(hAx3); cla(hAx3);
         if isLog3
-            plot(doppler_axis, 20*log10(mean(to_plot,1)+eps), 'LineWidth', 1.0);
+            plot(doppler_axis, log10(max(to_plot,1)+eps), 'LineWidth', 1.0);
             title('Doppler Profile (dB)');
             ylabel('Power (dB)');
         else
@@ -145,8 +145,8 @@ function interactive_tx_bf_viewer_paged()
         [~, cos_theta_mat] = meshgrid(range_axis(indices_1D), cos_theta);
         x_axis = R_mat.*cos_theta_mat;
         y_axis = R_mat.*sine_theta_mat;
-        range_angle_stich_flipped = (range_angle_stich_2d(indices_1D,:).');
-        surf(y_axis, x_axis, abs(range_angle_stich_flipped).^0.2,'EdgeColor','none');
+        range_angle_stich_2d = (range_angle_stich_2d(indices_1D,:).');
+        surf(y_axis, x_axis, abs(range_angle_stich_2d).^0.2,'EdgeColor','none');
         view(0, 60);
         xlabel('meters'); ylabel('meters');
         title('Stich range/azimuth');

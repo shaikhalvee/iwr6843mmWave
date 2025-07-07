@@ -5,11 +5,11 @@ close all; clc; clearvars;
 
 
 % ----------------- USER CONFIG ---------------------------------------
-adc_data_folder = 'D:\Documents\Drone_Data\data\txbf_prk_drn_9_1_9';
+adc_data_folder = 'D:\Documents\Drone_Data\data\txbf_prk_62625';
 [~, testRootFolder, ~] = fileparts(adc_data_folder);
 output_folder =  ['./output/' testRootFolder];
 oldParamsFile = [output_folder filesep testRootFolder '_params.mat'];
-frame_folder = [output_folder filesep 'rangeDopplerFFTmap/'];
+frame_folder = [output_folder filesep 'rangeDopplerFFTmap_11/'];
 calib_file      = './input/calibrConfig/calibrateResults_dummy.mat';
 
 % ----------------- LOAD PARAMS FROM JSON & CALIB ---------------------
@@ -31,7 +31,7 @@ numAngle = params.NumAnglesToSweep;
 
 % clutter & noise handle
 dcOffsetRemoval = true;
-dopplerClutterRemoval = false;
+dopplerClutterRemoval = true;
 
 
 % paramsConfig = struct;
@@ -55,7 +55,7 @@ all_to_plot = {};
 
 frameCounter = 1;
 
-for i_file = 1:numel(fileIdx_unique)
+for i_file = 1:numel(fileIdx_unique) 
     [fileNameStruct] = getBinFileNames_withIdx(adc_data_folder, fileIdx_unique{i_file});
     [numValidFrames, ~] = getValidNumFrames(fullfile(adc_data_folder, fileNameStruct.masterIdxFile));
 
